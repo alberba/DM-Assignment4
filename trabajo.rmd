@@ -1,0 +1,295 @@
+---
+title: "Assignment 4"
+author: "Santiago Rattenbach, Àngel Jiménez, Albert Salom"
+date: "21/11/2024"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Libraries, include=FALSE}
+# Load the required libraries, without showing warning messages
+suppressWarnings({
+  suppressPackageStartupMessages({
+    library(ggplot2)
+  })
+})
+```
+
+## The Data
+
+```{r}
+data <- read.csv("./penguindata.csv", header=TRUE, stringsAsFactors=TRUE)
+str(data)
+```
+
+### Independent Variables
+
+The dataset includes measurements taken for penguins in Palmer Archipelago. Variable information:
+size (flipper length, body mass, bill dimensions), sex and year.
+
+- **bill length mm:** a number denoting bill length (millimeters)
+- **bill depth mm:** a number denoting bill depth (millimeters)
+- **flipper length mm:** an integer denoting flipper length (millimeters)
+- **body mass g:** an integer denoting body mass (grams)
+- **sex:** a factor denoting penguin sex (female, male)
+- **year:** an integer denoting the study year (2007, 2008, or 2009)
+
+### Summary of the Data
+
+Before start training the model, it is important to analyze each of the independent variables to understand
+their values, distribution, and relationship with the target variable.
+
+```{r}
+summary(data)
+```
+
+#### Numerical Variables
+
+- **bill length mm:** 
+- **bill depth mm:** 
+- **flipper length mm:** 
+- **body mass g:** 
+
+Let's see how the dataset looks after removing the outliers:
+
+```{r}
+summary(data)
+```
+```{r}
+# List of numerical variables:
+# TODO: Cambiar esto
+numeric <- c('person_age', 'person_income', 'person_emp_exp', 'loan_amnt', 
+                    'loan_int_rate', 'loan_percent_income', 
+                    'cb_person_cred_hist_length', 'credit_score')
+
+
+# Plot the distribution of each numerical variable:
+for (n in numeric) {
+  print(
+    ggplot(data, aes(x = !!sym(n))) +
+      geom_histogram(fill = "lightblue", color = "white", bins = 30) +
+      labs(title = paste("Distribution of", n), x = n, y = "Frecuency") +
+      theme_minimal()
+  )
+}
+```
+
+
+#### Categorical
+
+```{r}
+# List of categorical variables:
+# TODO: cambiar esto
+categories <- c('person_gender', 'person_education', 'person_home_ownership', 'loan_intent', 'previous_loan_defaults_on_file')
+
+for (var in categories) {
+  print(
+    ggplot(data, aes_string(x = var)) +
+      geom_bar(fill = "coral1") +
+      labs(title = paste("Distribution of", var), x = var, y = "Frecuency") +
+      theme_minimal()
+  )
+}
+```
+
+### Data Correlations
+
+#### Numerical Variables
+
+```{r}
+# TODO: cambiar esto
+numeric_Corr <- data[, c('person_age', 'person_income', 'person_emp_exp',
+                        'loan_amnt', 'loan_int_rate', 'loan_percent_income',
+                        'cb_person_cred_hist_length', 'credit_score', 'loan_status')]
+
+ggcorr(numeric_Corr, label = TRUE)
+```
+
+```{r}
+# Compare the correlation matrix of the new dataset:
+ggcorr(data_Mod, label = TRUE, label_round = 2)
+```
+
+ 
+### Bivariate Analysis
+
+#### Numeric Variables
+
+
+
+#### Categorical Variables
+
+
+
+### Missing Value Analysis
+
+To find missing values in the dataset, we can use the `is.na()` function in R. 
+
+```{r}
+colSums(is.na(data_Mod))
+```
+
+
+
+### Key Features
+
+
+
+### PreProcessing Data
+
+#### Checking Normality (Skewness)
+
+Now we will check the normality of the numerical variables to see if they follow a normal distribution.
+In case they do not, we will apply transformations to make them follow a normal distribution.
+
+
+
+#### Creation of a better skewed dataset
+
+
+
+## Model Building
+
+### Sorting Variables
+
+To better handle the data, we find it convenient to reorder the columns, placing the numerical columns 
+first, followed by the categorical ones, and finally the target variable.
+
+```{r}
+# Identify numeric and factor columns
+numeric_columns <- sapply(data_Transformed, is.numeric)
+factor_columns <- sapply(data_Transformed, is.factor)
+
+
+# Order the columns: first the numeric ones, then the factor ones, and finally the target variable
+ordered_columns <- c(names(data_Transformed)[numeric_columns], 
+                     names(data_Transformed)[factor_columns])
+
+# Reorder DataFrame
+data_Transformed <- data_Transformed[, ordered_columns]
+```
+
+### Data Normalization
+
+We ensure that all the numerical variables are normalized to the same scale, so that there isn't one with a
+greater influence than the others.
+
+```{r}
+# Create normalization function
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+# Identify the numerical columns
+numerical_columns <- sapply(data_Transformed, is.numeric)
+
+# Apply a transformation (e.g., normalization) only to the numerical columns
+data_Normalized <- data_Transformed
+# Normalize the numerical data
+data_Normalized[, numerical_columns] <- as.data.frame(lapply(data_Transformed[, numerical_columns], normalize))
+
+# Confirm that normalization worked
+summary(data_Normalized)
+```
+
+### Train-Test Split
+
+Before splitting into train and test sets, it is important to know that, for k-Nearest Neighbors and Naive 
+Bayes, all variables need to be numeric. For categorical variables, we use one-hot encoding to convert them 
+into numeric variables, where each category becomes a new binary column.
+
+```{r}
+# Convert categorical variables into numerical ones with one-hot encoding
+data_Normalized <- model.matrix(~ . - 1, data = data_Normalized)
+
+# Convert the result to a data frame
+data_Normalized <- as.data.frame(data_Normalized)
+```
+
+```{r}
+## To reproduce the calculations
+seeds <- c(1357, 2468, 3579)
+set.seed(seeds[1])
+
+## Create an index to partition the data set
+ind <- sample(2, nrow(data_Normalized), replace=TRUE, prob=c(0.80, 0.20))
+
+data_Normalized.train <- data_Normalized[ind==1,]
+data_Normalized.test <- data_Normalized[ind==2,]
+```
+
+We have split the data into a training set and a test set, with 80% of the data in the training set and 20%
+in the test set. Let's check that the partitions have been done correctly.
+
+```{r}
+nrow(data_Normalized)
+nrow(data_Normalized.train)
+nrow(data_Normalized.test)
+```
+
+## Classification using Nearest Neighbors
+
+### Predictions
+
+
+
+## Classification using Naive Bayes
+
+
+## Classification using Decision Trees
+
+
+
+### Conversion of Numerical Variables 
+
+
+
+## Conclusion
+
+
+
+### Testing different seeds of train/test
+
+
+
+#### Seed 1
+
+#### 0.8 Train - 0.2 Test
+
+
+
+#### 0.7 Train - 0.3 Test
+
+
+
+#### 0.9 Train - 0.1 Test
+
+
+
+#### Seed 2
+
+
+
+#### Seed 3
+
+
+
+### Choosing the best model
+
+
+
+### Our Learnings
+
+
+
+### References
+
+- [R Documentation] (https://www.rdocumentation.org/): Used to understand some of the functions and packages
+  used in our analysis.
+- [ChatGPT] (chatgpt.com): Used for help in making sense of the data, translation of some text originally
+  written in Spanish and removal of certain warnings generated by library functions.
+- [RMD files from class]: Used as a reference for the structure of the document and as examples of
+  model implementation.
