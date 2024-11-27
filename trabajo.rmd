@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 suppressWarnings({
   suppressPackageStartupMessages({
     library(ggplot2)
+    library(GGally)
   })
 })
 ```
@@ -25,15 +26,18 @@ data <- read.csv("./penguindata.csv", header=TRUE, stringsAsFactors=TRUE)
 str(data)
 ```
 
+Si hacemos un primer vistazo, podemos observar como tenemos varios valores NAs que deberemos gestionar
+posteriormente.
+
 ### Independent Variables
 
 The dataset includes measurements taken for penguins in Palmer Archipelago. Variable information:
 size (flipper length, body mass, bill dimensions), sex and year.
 
-- **bill length mm:** a number denoting bill length (millimeters)
-- **bill depth mm:** a number denoting bill depth (millimeters)
-- **flipper length mm:** an integer denoting flipper length (millimeters)
-- **body mass g:** an integer denoting body mass (grams)
+- **bill_length_mm:** a number denoting bill length (millimeters)
+- **bill_depth_mm:** a number denoting bill depth (millimeters)
+- **flipper_length_mm:** an integer denoting flipper length (millimeters)
+- **body_mass_g:** an integer denoting body mass (grams)
 - **sex:** a factor denoting penguin sex (female, male)
 - **year:** an integer denoting the study year (2007, 2008, or 2009)
 
@@ -46,25 +50,28 @@ their values, distribution, and relationship with the target variable.
 summary(data)
 ```
 
+Como podemos observar, tenemos varios valores NA en las variables bill_length_mm, bill_depth_mm, 
+flipper_length_mm, body_mass_g y sex. Más tarde los trataremos.
+
 #### Numerical Variables
 
-- **bill length mm:** 
-- **bill depth mm:** 
-- **flipper length mm:** 
-- **body mass g:** 
+- **bill_length_mm:** Este dataset contiene la longitud del pico de los pinguinos en milimetros. Vemos que 
+  la longitud del pico de los pinguinos varia entre 32.1 y 59.6 milimetros, con una media de 44mm. No parece 
+  haber nada alarmante
 
-Let's see how the dataset looks after removing the outliers:
+- **bill_depth_mm:**  La profundidad del pico de los picos también viene en milimetros, en un rango entre 
+  13.1mm y 21.5mm, con una media de 17.2mm.
 
-```{r}
-summary(data)
-```
+- **flipper_length_mm:** La longitud de las aletas de los pinguinos del dataset varia entre 172mm y 231mm, 
+  con una media de 201mm. No parece haber ningun valor atípico.
+
+- **body_mass_g:** En el dataset, podemos observar que el peso de los pinguinos puede variar bastante, esto 
+  podría deberse a la edad de los pinguinos, ya que los pinguinos más jóvenes suelen pesar menos. El peso
+  de los pinguinos varia entre 2700g y 6300g, con una media de 4202g.
+
 ```{r}
 # List of numerical variables:
-# TODO: Cambiar esto
-numeric <- c('person_age', 'person_income', 'person_emp_exp', 'loan_amnt', 
-                    'loan_int_rate', 'loan_percent_income', 
-                    'cb_person_cred_hist_length', 'credit_score')
-
+numeric <- c('bill_length_mm', 'bill_depth_mm', 'flipper_length_mm', 'body_mass_g')
 
 # Plot the distribution of each numerical variable:
 for (n in numeric) {
@@ -77,13 +84,14 @@ for (n in numeric) {
 }
 ```
 
+A primera vista, parece ser que las variables numericas están algo centradas, asemejandose a una distribución
+normal. Igualmente, posteriormente realizaremos un análisis de normalidad para confirmar esto.
 
 #### Categorical
 
 ```{r}
 # List of categorical variables:
-# TODO: cambiar esto
-categories <- c('person_gender', 'person_education', 'person_home_ownership', 'loan_intent', 'previous_loan_defaults_on_file')
+categories <- c('year', 'sex')
 
 for (var in categories) {
   print(
@@ -95,24 +103,50 @@ for (var in categories) {
 }
 ```
 
+- **sex:** Se puede observar que hay una cantidad similar de pinguinos machos y hembras en el dataset. 
+  Esto es importante ya que si hubiera una gran diferencia entre los dos sexos, podría afectar a la 
+  precisión del modelo.
+
+- **year:** En el dataset, podemos observar que en cada año se ha hecho el estudio a un número similar de 
+  pingüinos. Nuevamente, esto nos beneficiará a la hora de entrenar el modelo.
+
+### Missing Value Analysis
+
+To find missing values in the dataset, we can use the `is.na()` function in R. 
+
+```{r}
+colSums(is.na(data))
+```
+
+Como se puede observar, tenemos varias columnas con valores NA. Al tratarse de pocos valores, podemos borrar 
+tranquilamente sin que el modelo se vea afectado.
+
+```{r}
+data <- na.omit(data)
+summary(data)
+```
+
 ### Data Correlations
+
+```{r}
+ggpairs(data)
+```
+
+```{r}
+ggpairs(data,                 # Data frame
+        columns = 2:7,        # Columns
+        aes(color = year,     # Color by grup (cathegorical)
+            alpha = 0.5))     # Transparency
+```
 
 #### Numerical Variables
 
 ```{r}
-# TODO: cambiar esto
-numeric_Corr <- data[, c('person_age', 'person_income', 'person_emp_exp',
-                        'loan_amnt', 'loan_int_rate', 'loan_percent_income',
-                        'cb_person_cred_hist_length', 'credit_score', 'loan_status')]
+numeric_Corr <- data[, c('bill_length_mm', 'bill_depth_mm', 'flipper_length_mm',
+                        'body_mass_g')]
 
 ggcorr(numeric_Corr, label = TRUE)
 ```
-
-```{r}
-# Compare the correlation matrix of the new dataset:
-ggcorr(data_Mod, label = TRUE, label_round = 2)
-```
-
  
 ### Bivariate Analysis
 
@@ -124,13 +158,6 @@ ggcorr(data_Mod, label = TRUE, label_round = 2)
 
 
 
-### Missing Value Analysis
-
-To find missing values in the dataset, we can use the `is.na()` function in R. 
-
-```{r}
-colSums(is.na(data_Mod))
-```
 
 
 
