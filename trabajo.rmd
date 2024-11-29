@@ -15,6 +15,11 @@ suppressWarnings({
   suppressPackageStartupMessages({
     library(ggplot2)
     library(GGally)
+    library(cluster)
+    library(factoextra)
+    library(data.table)
+    library(fpc)
+    
   })
 })
 ```
@@ -129,15 +134,24 @@ summary(data)
 ### Data Correlations
 
 ```{r}
-ggpairs(data)
-```
+data$year <- as.factor(data$year)
 
-```{r}
 ggpairs(data,                 # Data frame
         columns = 2:7,        # Columns
         aes(color = year,     # Color by grup (cathegorical)
             alpha = 0.5))     # Transparency
 ```
+
+Como se puede observar, vemos que el año del estudio no parece tener una gran influencia en las variables
+numéricas asi como en el sexo de los pinguinos. Esto es importante ya que si hubiera una gran diferencia
+entre los años, podría afectar a la precisión del modelo. Por tanto, podemos concluir que el año no es una
+variable importante para el modelo y procedemos a eliminarla.
+
+```{r}
+data <- data[, -7]
+summary(data)
+```
+
 
 #### Numerical Variables
 
@@ -147,62 +161,254 @@ numeric_Corr <- data[, c('bill_length_mm', 'bill_depth_mm', 'flipper_length_mm',
 
 ggcorr(numeric_Corr, label = TRUE)
 ```
+ Como se puede observar, existe una gran correlación entre todas las variables numéricas, lo que podría 
+ afectar a la precisión del modelo. Para solucionar esto, aplicaremos PCA para así poder reducir la 
+ dimensionalidad de los datos.
  
-### Bivariate Analysis
-
-#### Numeric Variables
-
-
-
-#### Categorical Variables
-
-
-
-
-
-
-### Key Features
-
-
-
-### PreProcessing Data
-
-#### Checking Normality (Skewness)
-
-Now we will check the normality of the numerical variables to see if they follow a normal distribution.
-In case they do not, we will apply transformations to make them follow a normal distribution.
-
-
-
-#### Creation of a better skewed dataset
-
-
-
 ## Model Building
 
-### Sorting Variables
+### Convert to Numerical Variables
 
-To better handle the data, we find it convenient to reorder the columns, placing the numerical columns 
-first, followed by the categorical ones, and finally the target variable.
+Tampoco creemos necesario mantener el valor de X, ya que es un identificador que no aporta información
 
 ```{r}
-# Identify numeric and factor columns
-numeric_columns <- sapply(data_Transformed, is.numeric)
-factor_columns <- sapply(data_Transformed, is.factor)
-
-
-# Order the columns: first the numeric ones, then the factor ones, and finally the target variable
-ordered_columns <- c(names(data_Transformed)[numeric_columns], 
-                     names(data_Transformed)[factor_columns])
-
-# Reorder DataFrame
-data_Transformed <- data_Transformed[, ordered_columns]
+data_NoX <- data[, 2:6]
 ```
 
-### Data Normalization
+```{r}
+# Convertir las variables categóricas en variables one hot encoding
+data_Num <- model.matrix(~ . -1, data = data_NoX)
 
-We ensure that all the numerical variables are normalized to the same scale, so that there isn't one with a
-greater influence than the others.
+# Convertir el resultado a un data frame
+data_Num <- as.data.frame(data_Num)
+summary(data_Num)
+```
+
+### Scaling the data
+
+Para poder aplicar el clustering de forma correcta, es necesario escalar los datos con una media de 0 y una
+desviación estándar de 1. Esto hace que quitemos la barrera de la escala en diferentes variables. 
+
+```{r}
+data_Scaled <- scale(data_Num)
+summary(data_Scaled)
+```
+
+## Clustering models
+
+### PCA 
+
+Para poder ver mejor los resultados, aplicaremos PCA para reducir la dimensionalidad de los datos.
+
+```{r}
+data_Scaled.pca<- prcomp(data_Num, center=TRUE, scale=TRUE)
+summary(data_Scaled.pca)
+```
+
+```{r}
+plot(data_Scaled.pca, type="l")
+```
+
+Como se puede ver, las 2 componentes principales explican el 85% de la varianza de los datos. Esto nos
+permite reducir la dimensionalidad de los datos sin perder mucha información. Además, a la hora de mostrar
+los resultados, podremos visualizarlos en un espacio de 2 dimensiones.
+
+```{r}
+data_PCA <- as.data.frame(data_Scaled.pca$x[,1:2])
+ggplot(data=data_PCA, aes(x=PC1, y=PC2, color=data$sex)) + geom_point() +
+  labs(title="PCA", x="PC1", y="PC2")
+```
+
+### Deciding the number of clusters
+
+Una manera de decidir el número de clusters es mediante el silhouette method. Este método nos permite 
+determinar el número de clusters que mejor se ajusta a los datos. Para ello, es importante que la puntación	
+sea lo más cercana a 1 posible.
+
+Antes de aplicar el silhouette method, es importante ver de manera visual el número de clusters que mejor se
+ajusta a los datos. Para ello, aplicaremos el método de "elbow plot".
+
+```{r}
+set.seed(123)
+# Compute and plot wss for k = 2 to k = 15
+k.max <- 15 # Maximal number of clusters
+wss <- sapply(1:k.max, 
+              function(k){kmeans(data_Scaled, k)$tot.withinss})
+
+plot(1:k.max, wss,
+     type="b", pch = 19, frame = FALSE, 
+     xlab="Number of clusters K",
+     ylab="Total within-clusters sum of squares")
+#abline(v = 3, lty =2)
+```
+
+Como se puede observar, el rango de 3 a 5 clusters parece ser el más adecuado ya que a partir del 5, apenas 
+hay bajado incluso una anormal subida en 6. Para confirmar esto, aplicaremos el silhouette method.
+
+```{r}
+cl.kmeans <-kmeans(data_Scaled, 3, nstart = 20)
+dis <- dist(data_Scaled)^2
+sil = silhouette (cl.kmeans$cluster, dis)
+summary(sil)
+print(mean(sil[,3]))
+```
+
+Como se puede observar, vemos como los 2 primeros clusters tienen una puntuación bastante alta, mientras que 
+el tercero tiene una puntuación bastante baja. Esto nos indica que el número de clusters no es el adecuado.
+
+```{r}
+cl.kmeans <-kmeans(data_Scaled, 4, nstart = 20)
+dis <- dist(data_Scaled)^2
+sil = silhouette (cl.kmeans$cluster, dis)
+summary(sil)
+print(mean(sil[,3]))
+```
+
+En este caso, vemos como el silhouette method nos indica que el número de clusters es el adecuado, ya que
+una puntuación de media de 0.77, lo cual es bastante bueno. Igualmente, probaremos con 5 clusters para
+confirmar que el número de clusters es el adecuado.
+
+```{r}
+cl.kmeans <-kmeans(data_Scaled, 5, nstart = 20)
+dis <- dist(data_Scaled)^2
+sil = silhouette (cl.kmeans$cluster, dis)
+summary(sil)
+print(mean(sil[,3]))
+```
+
+Con 5 clusters vemos como la puntuación no mejora, por lo que es mejor quedarnos con 4 clusters.
+
+## Partitional Clustering
+
+### Clustering using K-means 
+
+```{r}
+# Compute the k-means clustering algorithm
+kmeans_model <- kmeans(data_Scaled, centers = 4, nstart = 20)
+data_PCA <- as.data.table(data_PCA)
+cl.kmeans2 <- data_PCA[, km.Clusters := kmeans_model$cluster]
+
+ggplot(cl.kmeans2, aes(x = PC1, y = PC2)) +
+geom_point(aes(colour = factor(kmeans_model$cluster)), size = 2, alpha = 0.3) +
+theme_minimal()
+```
+
+Vemos que los clusters quedan bastante definidos, lo cual es una buena señal. Además, no hay ningún outlier
+que perjudique a los propios clusters. Veamos a ver si se pueden sacar conclusiones con algunas variables.
+
+```{r}
+data2 <- as.data.table(data)
+data2[, km.Clusters := kmeans_model$cluster]
+ggplot(data2, aes(x = sex, y = body_mass_g)) +
+geom_point(aes(colour = factor(kmeans_model$cluster)), size = 2, alpha = 0.3) +
+theme_minimal()
+```
+ 
+En este caso, podemos indicar como a las hembras se les asigna el cluster 1 o 4, mientras que a los machos
+se les asigna el cluster 2 o 3. Por tanto, el factor del sexo es un factor importante a la hora diferenciar
+las muestras. Además se puede apreciar una tendencia de que el clúster 1 forman parte del grupo de hembras
+mas pesadas, mientras que el clúster 4 forman parte del grupo de hembras más ligeras. En el caso de los
+machos pasa igual, siendo el clúster 2 el que forman parte de los machos más pesados y el clúster 3 los
+machos más ligeros.
+
+Observemos a ver si se pueden apreciar mas tendencias con otras variables.
+
+```{r}
+ggpairs(data2,        # Columns
+        aes(color = factor(kmeans_model$cluster),     # Color by grup (cathegorical)
+            alpha = 0.5))     # Transparency
+```
+
+En este gráfico se puede sacar bastante información. De primeras, confirmamos lo dicho anteriormente, que
+el cluster 1 y 4 son hembras y el cluster 2 y 3 son machos. Por tanto, nos fijaremos en como se relacionan
+las otras variables con el sexo de los pingüinos. 
+
+Si nos fijamos en la longitud de la aleta, podemos observar como los clusters 1 y 2, los que pesan mas, 
+son los que tienen unalongitud de aleta más larga, mientras que los clusters 3 y 4 son los que tienen una 
+longitud de aleta más corta. Podría ayudarnos a diferenciar entre los machos y hembras adultos y los jóvenes.
+
+
+### Clustering around K-Medoids (PAM)
+
+Ahora vamos a probar con este algoritmo, usando 4 clusters, ya que anteriormente hemos visto que es lo más adecuado.
+
+Probamos primero con la distancia euclidea:
+
+```{r}
+distEuclidea<-dist(data_Scaled, method="euclidean")
+pam_Euclidean <- pam(distEuclidea, k = 4)
+pam_Euclidean
+```
+```{r}
+clusplot(pam_Euclidean)
+```
+
+Vamos a ver ahora que obtenemos si usamos la distancia de Manhattan:
+
+```{r}
+distManhattan<-dist(data_Scaled, method="manhattan")
+# Compute the PAM clustering algorithm
+pam_Manhattan <- pam(distManhattan, k = 4)
+pam_Manhattan
+```
+
+```{r}
+clusplot(pam_Manhattan)
+```
+
+Como podemos observar, con la distancia de Manhattan los resultados son mucho peores.
+
+Ahora procedemos a aplicar la libreria pamk(), que nos estima el número de clusters óptimo.
+
+```{r}
+pamk <- pamk(distEuclidea)
+pamk$nc # Nos muestra el número de clusters óptimo
+```
+
+Como podemos apreciar, efectivamente el número de clústers óptimo es el que nosotros habíamos ya definido.
+
+### Clustering Density-based
+
+```{r}
+library(fpc)
+dbscan.results <- dbscan(data_Scaled, eps=0.35, MinPts=5) 
+dbscan.results
+```
+
+```{r}
+plot(dbscan.results, data_PCA[, 1:2])
+```
+
+Como podemos observar hay demasiados clusters y muchos outliers, que es lo que nos indica la columna de "0", así que probaremos otros parámetros
+
+```{r}
+dbscan.results2 <- dbscan(data_Scaled, eps=0.75, MinPts=20) 
+dbscan.results2
+```
+```{r}
+plot(dbscan.results2, data_PCA[, 1:2])
+```
+
+Sigue habiendo muchos outliers, vamos a intentar mejorarlo
+
+```{r}
+dbscan.results3 <- dbscan(data_Scaled, eps=0.85, MinPts=5) 
+dbscan.results3
+```
+```{r}
+plot(dbscan.results3, data_PCA[, 1:2])
+```
+
+```{r}
+plotcluster(data_PCA[, 1:2], dbscan.results3$cluster)
+```
+
+Como podemos observar, el número de clusters es el adecuado, ya que apenas hay outliers y los clusters están
+bien definidos.
+
+## Hierarchical Clustering
+
+Primero vamos a normalizar los datos para poder aplicar el clustering de forma correcta.
 
 ```{r}
 # Create normalization function
@@ -210,97 +416,54 @@ normalize <- function(x) {
   return ((x - min(x)) / (max(x) - min(x)))
 }
 
-# Identify the numerical columns
-numerical_columns <- sapply(data_Transformed, is.numeric)
-
-# Apply a transformation (e.g., normalization) only to the numerical columns
-data_Normalized <- data_Transformed
-# Normalize the numerical data
-data_Normalized[, numerical_columns] <- as.data.frame(lapply(data_Transformed[, numerical_columns], normalize))
-
-# Confirm that normalization worked
+# Normalize the data
+data_Normalized <- as.data.frame(lapply(data[2:5], normalize))
+data_Normalized <-cbind(data_Normalized, data[,6])
 summary(data_Normalized)
 ```
-
-### Train-Test Split
-
-Before splitting into train and test sets, it is important to know that, for k-Nearest Neighbors and Naive 
-Bayes, all variables need to be numeric. For categorical variables, we use one-hot encoding to convert them 
-into numeric variables, where each category becomes a new binary column.
-
 ```{r}
-# Convert categorical variables into numerical ones with one-hot encoding
-data_Normalized <- model.matrix(~ . - 1, data = data_Normalized)
-
-# Convert the result to a data frame
-data_Normalized <- as.data.frame(data_Normalized)
+# Calcular la distancia euclidiana solo para las columnas numéricas
+distEuclidea <- dist(data_Normalized[, 1:4], method = "euclidean")
 ```
 
 ```{r}
-## To reproduce the calculations
-seeds <- c(1357, 2468, 3579)
-set.seed(seeds[1])
-
-## Create an index to partition the data set
-ind <- sample(2, nrow(data_Normalized), replace=TRUE, prob=c(0.80, 0.20))
-
-data_Normalized.train <- data_Normalized[ind==1,]
-data_Normalized.test <- data_Normalized[ind==2,]
+hclust_single <- hclust(distEuclidea, method = "single")
+plot(hclust_single, main = "Dendrograma de Clustering - Single", hang = -1)
 ```
 
-We have split the data into a training set and a test set, with 80% of the data in the training set and 20%
-in the test set. Let's check that the partitions have been done correctly.
+Como podemos observar, tenemos demasiadas muestras para poder analizar correctamente y se satura el gráfico, vamos a seleccionar un menor número de muestras de forma aleatoria.
 
 ```{r}
-nrow(data_Normalized)
-nrow(data_Normalized.train)
-nrow(data_Normalized.test)
+set.seed(2835)  
+
+idx <- sample(1:dim(data_Normalized)[1], 40)  # Seleccionar 40 muestras aleatorias
+data_Sample <- data_Normalized[idx, ]  
+
+distEuclidea <- dist(data_Sample[, 1:4], method = "euclidean")
 ```
 
-## Classification using Nearest Neighbors
-
-### Predictions
-
-
-
-## Classification using Naive Bayes
-
-
-## Classification using Decision Trees
+```{r}
+hclust_single <- hclust(distEuclidea, method = "single")
+plot(hclust_single, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1)
+```
 
 
 
-### Conversion of Numerical Variables 
+```{r}
+hclust_avg <- hclust(distEuclidea, method = "average")
+plot(hclust_avg, main = "Dendrograma de Clustering - Average", cex = 0.6, hang = -1)
+```
 
+```{r}
+hclust_complete <- hclust(distEuclidea, method = "complete")
+plot(hclust_complete, main = "Dendrograma de Clustering - Complete", cex = 0.6, hang = -1)
+```
 
+```{r}
+
+```
 
 ## Conclusion
-
-
-
-### Testing different seeds of train/test
-
-
-
-#### Seed 1
-
-#### 0.8 Train - 0.2 Test
-
-
-
-#### 0.7 Train - 0.3 Test
-
-
-
-#### 0.9 Train - 0.1 Test
-
-
-
-#### Seed 2
-
-
-
-#### Seed 3
 
 
 
