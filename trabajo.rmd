@@ -511,7 +511,7 @@ lo que puede ser un buen punto para cortar el dendrograma.
 which.max(round(heigth_single-height,3)) # the step of the largest increase
 ```
 
-
+No sé muy bien esto que nos indica
 
 
 
