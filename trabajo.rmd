@@ -57,21 +57,41 @@ their values, distribution, and relationship with the target variable.
 ```{r}
 summary(data)
 ```
+We can remove the "x" column as it is not relevant for the analysis.
+```{r}
+data <- data[, -1]
+```
 
 Como podemos observar, tenemos varios valores NA en las variables bill_length_mm, bill_depth_mm, 
 flipper_length_mm, body_mass_g y sex. Más tarde los trataremos.
 
+### Missing Value Analysis
+
+To find missing values in the dataset, we can use the `is.na()` function in R. 
+
+```{r}
+colSums(is.na(data))
+```
+
+Como se puede observar, tenemos varias columnas con valores NA. Al tratarse de pocos valores, podemos borrar 
+tranquilamente sin que el modelo se vea afectado.
+
+```{r}
+data <- na.omit(data)
+summary(data)
+```
+
 #### Numerical Variables
 
-- **bill_length_mm:** Este dataset contiene la longitud del pico de los pinguinos en milimetros. Vemos que 
+- **bill_length_mm:** Este dataset contiene la longitud del pico de los pingüinos en milimetros. Vemos que 
   la longitud del pico de los pinguinos varia entre 32.1 y 59.6 milimetros, con una media de 44mm. No parece 
-  haber nada alarmante
+  haber datos excesivamente inusuales
 
-- **bill_depth_mm:**  La profundidad del pico de los picos también viene en milimetros, en un rango entre 
-  13.1mm y 21.5mm, con una media de 17.2mm.
+- **bill_depth_mm:**  La profundidad del pico de los pingüinos también viene en milimetros, en un rango entre 
+  13.1mm y 21.5mm, con una media de 17.2mm. De nuevo, no hay ningún dato a resaltar.
 
 - **flipper_length_mm:** La longitud de las aletas de los pinguinos del dataset varia entre 172mm y 231mm, 
-  con una media de 201mm. No parece haber ningun valor atípico.
+  con una media de 201mm. Tampoco parece haber ningun valor atípico.
 
 - **body_mass_g:** En el dataset, podemos observar que el peso de los pinguinos puede variar bastante, esto 
   podría deberse a la edad de los pinguinos, ya que los pinguinos más jóvenes suelen pesar menos. El peso
@@ -93,7 +113,7 @@ for (n in numeric) {
 ```
 
 A primera vista, parece ser que las variables numericas están algo centradas, asemejandose a una distribución
-normal. Igualmente, posteriormente realizaremos un análisis de normalidad para confirmar esto.
+normal. De todas formas, posteriormente realizaremos un análisis de normalidad para confirmar esto.
 
 #### Categorical
 
@@ -118,40 +138,24 @@ for (var in categories) {
 - **year:** En el dataset, podemos observar que en cada año se ha hecho el estudio a un número similar de 
   pingüinos. Nuevamente, esto nos beneficiará a la hora de entrenar el modelo.
 
-### Missing Value Analysis
-
-To find missing values in the dataset, we can use the `is.na()` function in R. 
-
-```{r}
-colSums(is.na(data))
-```
-
-Como se puede observar, tenemos varias columnas con valores NA. Al tratarse de pocos valores, podemos borrar 
-tranquilamente sin que el modelo se vea afectado.
-
-```{r}
-data <- na.omit(data)
-summary(data)
-```
-
 ### Data Correlations
 
 ```{r}
 data$year <- as.factor(data$year)
 
 ggpairs(data,                 # Data frame
-        columns = 2:7,        # Columns
+        columns = 1:6,        # Columns
         aes(color = year,     # Color by grup (cathegorical)
             alpha = 0.5))     # Transparency
 ```
 
 Como se puede observar, vemos que el año del estudio no parece tener una gran influencia en las variables
-numéricas asi como en el sexo de los pinguinos. Esto es importante ya que si hubiera una gran diferencia
+numéricas así como en el sexo de los pinguinos. Esto es importante ya que si hubiera una gran diferencia
 entre los años, podría afectar a la precisión del modelo. Por tanto, podemos concluir que el año no es una
 variable importante para el modelo y procedemos a eliminarla.
 
 ```{r}
-data <- data[, -7]
+data <- data[, -6]
 summary(data)
 ```
 
@@ -172,15 +176,9 @@ ggcorr(numeric_Corr, label = TRUE)
 
 ### Convert to Numerical Variables
 
-Tampoco creemos necesario mantener el valor de X, ya que es un identificador que no aporta información
-
-```{r}
-data_NoX <- data[, 2:6]
-```
-
 ```{r}
 # Convertir las variables categóricas en variables one hot encoding
-data_Num <- model.matrix(~ . -1, data = data_NoX)
+data_Num <- model.matrix(~ . -1, data = data)
 
 # Convertir el resultado a un data frame
 data_Num <- as.data.frame(data_Num)
@@ -212,7 +210,7 @@ summary(data_Scaled.pca)
 plot(data_Scaled.pca, type="l")
 ```
 
-Como se puede ver, las 2 componentes principales explican el 85% de la varianza de los datos. Esto nos
+Como se puede ver, las 2 componentes principales explican alrededor del 85% de la varianza de los datos. Esto nos
 permite reducir la dimensionalidad de los datos sin perder mucha información. Además, a la hora de mostrar
 los resultados, podremos visualizarlos en un espacio de 2 dimensiones.
 
@@ -297,7 +295,7 @@ theme_minimal()
 ```
 
 Vemos que los clusters quedan bastante definidos, lo cual es una buena señal. Además, no hay ningún outlier
-que perjudique a los propios clusters. Veamos a ver si se pueden sacar conclusiones con algunas variables.
+que perjudique a los propios clusters. Veamos si se pueden sacar conclusiones con algunas variables.
 
 ```{r}
 data2 <- as.data.table(data)
@@ -309,8 +307,8 @@ theme_minimal()
  
 En este caso, podemos indicar como a las hembras se les asigna el cluster 1 o 4, mientras que a los machos
 se les asigna el cluster 2 o 3. Por tanto, el factor del sexo es un factor importante a la hora diferenciar
-las muestras. Además se puede apreciar una tendencia de que el clúster 1 forman parte del grupo de hembras
-mas pesadas, mientras que el clúster 4 forman parte del grupo de hembras más ligeras. En el caso de los
+las muestras. Además se puede apreciar una tendencia ya que el clúster 1 forman parte del grupo de hembras
+más pesadas, mientras que el clúster 4 forman parte del grupo de hembras más ligeras. En el caso de los
 machos pasa igual, siendo el clúster 2 el que forman parte de los machos más pesados y el clúster 3 los
 machos más ligeros.
 
@@ -420,8 +418,8 @@ normalize <- function(x) {
 }
 
 # Normalize the data
-data_Normalized <- as.data.frame(lapply(data[2:5], normalize))
-data_Normalized <-cbind(data_Normalized, data[,6])
+data_Normalized <- as.data.frame(lapply(data[1:4], normalize))
+data_Normalized <-cbind(data_Normalized, data[,5])
 summary(data_Normalized)
 ```
 ```{r}
@@ -437,9 +435,9 @@ plot(hclust_single, main = "Dendrograma de Clustering - Single", hang = -1)
 Como podemos observar, tenemos demasiadas muestras para poder analizar correctamente y se satura el gráfico, vamos a seleccionar un menor número de muestras de forma aleatoria.
 
 ```{r}
-set.seed(2835)  
+set.seed(2837)
 
-idx <- sample(1:dim(data_Normalized)[1], 40)  # Seleccionar 40 muestras aleatorias
+idx <- sample(1:dim(data_Normalized)[1], 60)  # Seleccionar 40 muestras aleatorias
 data_Sample <- data_Normalized[idx, ]  
 
 distEuclidea <- dist(data_Sample[, 1:4], method = "euclidean")
@@ -457,6 +455,11 @@ plot(hclust_single, main = "Dendrograma de Clustering - Single", cex = 0.6, hang
 
 rect.hclust(hclust_single, k=4)
 ```
+```{r}
+plot(data_Sample$x[, 1:2], col = groups)
+text(x = data_Sample$x[, 1:2], labels=data_Sample$idx, pos = 3, cex = 0.5, col = groups)
+```
+
 
 ```{r}
 groups <- cutree(hclust_single, k = 4)
