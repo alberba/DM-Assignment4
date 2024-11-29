@@ -447,16 +447,39 @@ hclust_single <- hclust(distEuclidea, method = "single")
 plot(hclust_single, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1)
 ```
 
+Ahora procederemos a cortar en 4 clústers, como pensamos que se separan mejor los datos.
+
+```{r}
+plot(hclust_single, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1) 
+
+rect.hclust(hclust_single, k=4)
+```
+
+```{r}
+groups <- cutree(hclust_single, k = 4)
+
+# Añadir los clusters al dataset
+data_Sample <- as.data.table(data_Sample)
+data_Sample[, hc.Clusters := clusters_hc]
+
+# Visualizar los resultados en un gráfico
+ggplot(data_Sample, aes(x = bill_length_mm, y = body_mass_g)) +
+  geom_point(aes(colour = factor(hc.Clusters)), size = 3, alpha = 0.8) +
+  theme_minimal() +
+  labs(title = "Clustering Jerárquico - 4 Clústeres", x = "Bill Length (mm)", y = "Body Mass (g)")
+```
+
+No pinta bien :v
 
 
 ```{r}
 hclust_avg <- hclust(distEuclidea, method = "average")
-plot(hclust_avg, main = "Dendrograma de Clustering - Average", cex = 0.6, hang = -1)
+plot(hclust_avg, main = "Dendrograma de Clustering - Average", hang = -1)
 ```
 
 ```{r}
 hclust_complete <- hclust(distEuclidea, method = "complete")
-plot(hclust_complete, main = "Dendrograma de Clustering - Complete", cex = 0.6, hang = -1)
+plot(hclust_complete, main = "Dendrograma de Clustering - Complete", hang = -1)
 ```
 
 ```{r}
