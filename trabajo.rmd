@@ -28,6 +28,9 @@ suppressWarnings({
 
 ```{r}
 data <- read.csv("./penguindata.csv", header=TRUE, stringsAsFactors=TRUE)
+
+# Para las ejecuciones en local de Angel
+# data <- read.csv("../DATASETS/penguindata.csv", header=TRUE, stringsAsFactors=TRUE)
 str(data)
 ```
 
@@ -460,17 +463,57 @@ groups <- cutree(hclust_single, k = 4)
 
 # Añadir los clusters al dataset
 data_Sample <- as.data.table(data_Sample)
-data_Sample[, hc.Clusters := clusters_hc]
-
-# Visualizar los resultados en un gráfico
-ggplot(data_Sample, aes(x = bill_length_mm, y = body_mass_g)) +
-  geom_point(aes(colour = factor(hc.Clusters)), size = 3, alpha = 0.8) +
-  theme_minimal() +
-  labs(title = "Clustering Jerárquico - 4 Clústeres", x = "Bill Length (mm)", y = "Body Mass (g)")
+data_Sample[, hc.Clusters := groups]
 ```
 
-No pinta bien :v
+Visualizamos los clusters con PCA
 
+```{r}
+# Realizar PCA en los datos normalizados
+data_Sample.pca <- prcomp(data_Sample[, 1:4], center = TRUE, scale = TRUE)
+
+# Obtener las dos primeras componentes principales
+data_Sample_PCA <- as.data.frame(data_Sample.pca$x[, 1:2])
+
+# Añadir los clusters al dataframe de PCA desde el dataframe original
+data_Sample_PCA$cluster <- as.factor(data_Sample$hc.Clusters)
+
+# Visualizar los clusters usando ggplot
+ggplot(data_Sample_PCA, aes(x = PC1, y = PC2, color = cluster)) +
+  geom_point(size = 3) +
+  labs(title = "Clusters del Clustering Jerárquico", x = "PC1", y = "PC2") +
+  theme_minimal()
+```
+
+
+```{r}
+heigth_single<-hclust_single$height # height values
+heigth_single
+```
+
+```{r}
+height <- c(0, heigth_single[-length(heigth_single)]) # vector that has to be substracted from height.cl
+round(heigth_single-height, 3) # differences in height, rounded at the 3rd digit
+```
+
+```{r}
+max(round(heigth_single-height,3)) # the largest increase
+```
+
+Este valor es el mayor "salto" en la distancia entre los clusters a lo largo del proceso de agrupación. En el contexto de clustering jerárquico, 
+un gran aumento en la altura indica que dos clusters muy distintos (en términos de sus características) se han unido, 
+lo que puede ser un buen punto para cortar el dendrograma.
+
+```{r}
+which.max(round(heigth_single-height,3)) # the step of the largest increase
+```
+
+
+
+
+
+
+Otros tipos de métodos, average y complete:
 
 ```{r}
 hclust_avg <- hclust(distEuclidea, method = "average")
