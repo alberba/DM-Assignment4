@@ -352,6 +352,7 @@ Probamos primero con la distancia euclidea:
 
 ```{r}
 distEuclidea <- dist(data_Scaled, method="euclidean")
+#distEuclidea <- dist(data_Scaled, method="manhattan")
 pam_Euclidean <- pam(distEuclidea, k = 4)
 pam_Euclidean
 ```
@@ -440,6 +441,7 @@ summary(data_Normalized)
 ```{r}
 # Calcular la distancia euclidiea
 distEuclidea <- dist(data_Normalized[, 1:6], method = "euclidean")
+#distEuclidea <- dist(data_Normalized[, 1:6], method = "manhattan")
 ```
 
 ```{r}
@@ -456,6 +458,7 @@ idx <- sample(1:dim(data_Normalized)[1], 60)  # Seleccionar 60 muestras aleatori
 data_Sample <- data_Normalized[idx, ]  
 
 distEuclideaSample <- dist(data_Sample[, 1:6], method = "euclidean")
+#distEuclideaSample <- dist(data_Sample[, 1:6], method = "manhattan")
 ```
 
 ```{r}
@@ -468,7 +471,7 @@ Ahora procederemos a cortar en 4 clústers, como pensamos que se separan mejor l
 ```{r}
 plot(hclust_single2, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1) 
 
-rect.hclust(hclust_single, k=4)
+rect.hclust(hclust_single2, k=4)
 ```
 
 ```{r}
@@ -578,9 +581,13 @@ Now wee will try again but we will remove the sex column from the dataset.
 
 ```{r}
 dataNoSex <- data_Normalized[1:4]
+dataNoSex_Scaled.pca<- prcomp(dataNoSex, center=TRUE, scale=TRUE)
+data_PCA <- as.data.frame(dataNoSex_Scaled.pca$x[,1:2])
+data_PCA <- as.data.table(data_PCA)
 
 # Calcular la distancia euclidea
 distEuclidea <- dist(dataNoSex, method = "euclidean")
+#distEuclidea <- dist(dataNoSex, method = "manhattan")
 ```
 
 ```{r}
@@ -592,6 +599,8 @@ idx <- sample(1:dim(dataNoSex)[1], 60)  # Seleccionar 60 muestras aleatorias
 data_Sample <- dataNoSex[idx, ]  
 
 distEuclideaSample <- dist(data_Sample[, 1:4], method = "euclidean")
+#distEuclideaSample <- dist(data_Sample[, 1:4], method = "manhattan")
+
 ```
 
 ```{r}
@@ -605,10 +614,11 @@ Ahora procederemos a cortar en 4 clústers, ya que parece ser la mejor forma de 
 plot(hclust_single2, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1) 
 
 rect.hclust(hclust_single2, k=4)
+rect.hclust(hclust_single2, k=3)
 ```
 
 ```{r}
-groups <- cutree(hclust_single, k = 4)
+groups <- cutree(hclust_single, k = 3)
 
 # Añadir los clusters al dataset
 data_Sample <- as.data.table(dataNoSex)
@@ -646,10 +656,11 @@ idx <- sample(1:dim(dataNoSex)[1], 60)  # Seleccionar 60 muestras aleatorias
 data_Sample <- dataNoSex[idx, ]  
 
 distEuclideaSample <- dist(data_Sample[, 1:4], method = "euclidean")
+#distEuclideaSample <- dist(data_Sample[, 1:4], method = "manhattan")
 ```
 
 ```{r}
-groups <- cutree(hclust_average, k = 4)
+groups <- cutree(hclust_average, k = 3)
 
 # Añadir los clusters al dataset
 data_Sample <- as.data.table(dataNoSex)
@@ -687,10 +698,11 @@ idx <- sample(1:dim(dataNoSex)[1], 60)  # Seleccionar 60 muestras aleatorias
 data_Sample <- dataNoSex[idx, ]  
 
 distEuclideaSample <- dist(data_Sample[, 1:4], method = "euclidean")
+#distEuclideaSample <- dist(data_Sample[, 1:4], method = "manhattan")
 ```
 
 ```{r}
-groups <- cutree(hclust_complete, k = 4)
+groups <- cutree(hclust_complete, k = 3)
 
 # Añadir los clusters al dataset
 data_Sample <- as.data.table(dataNoSex)
@@ -707,7 +719,6 @@ ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
 geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
 theme_minimal()
 ```
-No entiendo por qué da así el dibujo
 
 ```{r}
 heigth_complete<-hclust_complete$height # height values
