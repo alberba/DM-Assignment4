@@ -27,10 +27,10 @@ suppressWarnings({
 ## The Data
 
 ```{r}
-data <- read.csv("./penguindata.csv", header=TRUE, stringsAsFactors=TRUE)
+# data <- read.csv("./penguindata.csv", header=TRUE, stringsAsFactors=TRUE)
 
 # Para las ejecuciones en local de Angel
-# data <- read.csv("../DATASETS/penguindata.csv", header=TRUE, stringsAsFactors=TRUE)
+data <- read.csv("../DATASETS/penguindata.csv", header=TRUE, stringsAsFactors=TRUE)
 str(data)
 ```
 
@@ -328,21 +328,41 @@ Si nos fijamos en la longitud de la aleta, podemos observar como los clusters 1 
 son los que tienen unalongitud de aleta más larga, mientras que los clusters 3 y 4 son los que tienen una 
 longitud de aleta más corta. Podría ayudarnos a diferenciar entre los machos y hembras adultos y los jóvenes.
 
+Sin embargo, si nos fijamos en la profundidad del pico, vemos que la tendencia es inversa a las otras 2.
+Según nuestra suposición, esto supondría que los jovenes tienen un pico mayor que los adultos, lo cual no
+tiene mucho sentido. Por tanto, los clusters no parecen seguir una división de jovenes y adultos por sexo.
+Por tanto, puede ser que el dataset divida por especies de pingüinos. Para ello, más tarde probaremos 
+modificando el dataset.
 
 ### Clustering around K-Medoids (PAM)
 
-Ahora vamos a probar con este algoritmo, usando 4 clusters, ya que anteriormente hemos visto que es lo más adecuado.
+Para conocer el número de clusters óptimo, utilizaremos la función pamk del paquete fpc.
 
+```{r}
+pamk <- pamk(distEuclidea)
+pamk$nc # Nos muestra el número de clusters óptimo
+```
+
+Como podemos apreciar, efectivamente el número de clústers óptimo es 4, el cual es el mismo que hemos
+decidido con el k-means.- omsim le se lauc le s
+
+Ahora vamos a probar con este algoritmo, usando 4 clusters, asi.como hemos decidido a
+etnemroiret
 Probamos primero con la distancia euclidea:
 
 ```{r}
-distEuclidea<-dist(data_Scaled, method="euclidean")
+distEuclidea <- dist(data_Scaled, method="euclidean")
 pam_Euclidean <- pam(distEuclidea, k = 4)
 pam_Euclidean
 ```
+
 ```{r}
 clusplot(pam_Euclidean)
 ```
+
+Vemos que los clusters estan definidos igual de bien que con el k-means. Esto se debe a que la distancia 
+euclidea es la más adecuada para valores continuas o valores mixtas(continuas y categóricas). Este es 
+nuestro caso.
 
 Vamos a ver ahora que obtenemos si usamos la distancia de Manhattan:
 
@@ -357,18 +377,14 @@ pam_Manhattan
 clusplot(pam_Manhattan)
 ```
 
-Como podemos observar, con la distancia de Manhattan los resultados son mucho peores.
-
-Ahora procedemos a aplicar la libreria pamk(), que nos estima el número de clusters óptimo.
-
-```{r}
-pamk <- pamk(distEuclidea)
-pamk$nc # Nos muestra el número de clusters óptimo
-```
-
-Como podemos apreciar, efectivamente el número de clústers óptimo es el que nosotros habíamos ya definido.
+Como podemos observar, con la distancia de Manhattan los resultados son mucho peores. Se puede apreciar como
+las muestras de los clusters están mezcladas, lo cual no es bueno. Por tanto, la distancia euclidea parece 
+ser mejor.
 
 ### Clustering Density-based
+
+Para el desnity-based clustering, vamos a utilizar el algoritmo DBSCAN. Los parámetros inicialmente son
+aleatorios, hasta que encontremos los parámetros que mejor se ajusten a los datos.
 
 ```{r}
 library(fpc)
@@ -418,13 +434,12 @@ normalize <- function(x) {
 }
 
 # Normalize the data
-data_Normalized <- as.data.frame(lapply(data[1:4], normalize))
-data_Normalized <-cbind(data_Normalized, data[,5])
+data_Normalized <- as.data.frame(lapply(data_Num, normalize))
 summary(data_Normalized)
 ```
 ```{r}
 # Calcular la distancia euclidiana solo para las columnas numéricas
-distEuclidea <- dist(data_Normalized[, 1:4], method = "euclidean")
+distEuclidea <- dist(data_Normalized[, 1:6], method = "euclidean")
 ```
 
 ```{r}
@@ -437,55 +452,42 @@ Como podemos observar, tenemos demasiadas muestras para poder analizar correctam
 ```{r}
 set.seed(2837)
 
-idx <- sample(1:dim(data_Normalized)[1], 60)  # Seleccionar 40 muestras aleatorias
+idx <- sample(1:dim(data_Normalized)[1], 60)  # Seleccionar 60 muestras aleatorias
 data_Sample <- data_Normalized[idx, ]  
 
-distEuclidea <- dist(data_Sample[, 1:4], method = "euclidean")
+distEuclidea <- dist(data_Sample[, 1:6], method = "euclidean")
 ```
 
 ```{r}
-hclust_single <- hclust(distEuclidea, method = "single")
-plot(hclust_single, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1)
+hclust_single2 <- hclust(distEuclidea, method = "single")
+plot(hclust_single2, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1)
 ```
 
 Ahora procederemos a cortar en 4 clústers, como pensamos que se separan mejor los datos.
 
 ```{r}
-plot(hclust_single, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1) 
+plot(hclust_single2, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1) 
 
 rect.hclust(hclust_single, k=4)
 ```
-```{r}
-plot(data_Sample$x[, 1:2], col = groups)
-text(x = data_Sample$x[, 1:2], labels=data_Sample$idx, pos = 3, cex = 0.5, col = groups)
-```
-
 
 ```{r}
 groups <- cutree(hclust_single, k = 4)
 
 # Añadir los clusters al dataset
-data_Sample <- as.data.table(data_Sample)
+data_Sample <- as.data.table(data_Normalized)
 data_Sample[, hc.Clusters := groups]
 ```
 
 Visualizamos los clusters con PCA
 
 ```{r}
-# Realizar PCA en los datos normalizados
-data_Sample.pca <- prcomp(data_Sample[, 1:4], center = TRUE, scale = TRUE)
-
-# Obtener las dos primeras componentes principales
-data_Sample_PCA <- as.data.frame(data_Sample.pca$x[, 1:2])
-
 # Añadir los clusters al dataframe de PCA desde el dataframe original
-data_Sample_PCA$cluster <- as.factor(data_Sample$hc.Clusters)
+cl.hclust <- data_PCA[, hc.Clusters := groups]
 
-# Visualizar los clusters usando ggplot
-ggplot(data_Sample_PCA, aes(x = PC1, y = PC2, color = cluster)) +
-  geom_point(size = 3) +
-  labs(title = "Clusters del Clustering Jerárquico", x = "PC1", y = "PC2") +
-  theme_minimal()
+ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
+geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
+theme_minimal()
 ```
 
 
@@ -511,17 +513,44 @@ lo que puede ser un buen punto para cortar el dendrograma.
 which.max(round(heigth_single-height,3)) # the step of the largest increase
 ```
 
-No sé muy bien esto que nos indica
+Como podemos observar con este último valor, el mayor salto se produce en el paso 332, por lo que se determina que el número de clusters óptimo es 2.
 
+We know, however, that these two clusters are probably the result of dividing the penguins between male and
+female, which isn't useful at all as that classification is obvious and we are trying to divide the penguins
+in a more meaningful way, such as species. Because of this, we are going to try again later but we will
+remove the sex column from the dataset, in order to try to divide the penguins in a more meaningful way.
 
 
 
 Otros tipos de métodos, average y complete:
 
 ```{r}
+# Calcular la distancia euclidiana solo para las columnas numéricas
+distEuclidea <- dist(data_Normalized[, 1:6], method = "euclidean")
+
 hclust_avg <- hclust(distEuclidea, method = "average")
 plot(hclust_avg, main = "Dendrograma de Clustering - Average", hang = -1)
 ```
+
+```{r}
+groups <- cutree(hclust_avg, k = 4)
+
+# Añadir los clusters al dataset
+data_Sample <- as.data.table(data_Normalized)
+data_Sample[, hc.Clusters := groups]
+```
+
+```{r}
+# Añadir los clusters al dataframe de PCA desde el dataframe original
+cl.hclust <- data_PCA[, hc.Clusters := groups]
+
+ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
+geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
+theme_minimal()
+```
+
+As we can see, we end up with very similar results so we can assume that the number of recommended clusters
+will be two again. We will try with the complete method now.
 
 ```{r}
 hclust_complete <- hclust(distEuclidea, method = "complete")
@@ -529,9 +558,30 @@ plot(hclust_complete, main = "Dendrograma de Clustering - Complete", hang = -1)
 ```
 
 ```{r}
+groups <- cutree(hclust_complete, k = 4)
 
+# Añadir los clusters al dataset
+data_Sample <- as.data.table(data_Normalized)
+data_Sample[, hc.Clusters := groups]
 ```
 
+```{r}
+# Añadir los clusters al dataframe de PCA desde el dataframe original
+cl.hclust <- data_PCA[, hc.Clusters := groups]
+
+ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
+geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
+theme_minimal()
+```
+
+Again, we end up with very similar results so we can assume that the number of recommended clusters will be two again.
+
+Now wee will try again but we will remove the sex column from the dataset.
+
+```{r}
+```
+
+ I feel love for the f
 ## Conclusion
 
 
