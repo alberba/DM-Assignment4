@@ -27,10 +27,10 @@ suppressWarnings({
 ## The Data
 
 ```{r}
-# data <- read.csv("./penguindata.csv", header=TRUE, stringsAsFactors=TRUE)
+data <- read.csv("./penguindata.csv", header=TRUE, stringsAsFactors=TRUE)
 
 # Para las ejecuciones en local de Angel
-data <- read.csv("../DATASETS/penguindata.csv", header=TRUE, stringsAsFactors=TRUE)
+# data <- read.csv("../DATASETS/penguindata.csv", header=TRUE, stringsAsFactors=TRUE)
 str(data)
 ```
 
@@ -438,7 +438,7 @@ data_Normalized <- as.data.frame(lapply(data_Num, normalize))
 summary(data_Normalized)
 ```
 ```{r}
-# Calcular la distancia euclidiana solo para las columnas numéricas
+# Calcular la distancia euclidiea
 distEuclidea <- dist(data_Normalized[, 1:6], method = "euclidean")
 ```
 
@@ -455,11 +455,11 @@ set.seed(2837)
 idx <- sample(1:dim(data_Normalized)[1], 60)  # Seleccionar 60 muestras aleatorias
 data_Sample <- data_Normalized[idx, ]  
 
-distEuclidea <- dist(data_Sample[, 1:6], method = "euclidean")
+distEuclideaSample <- dist(data_Sample[, 1:6], method = "euclidean")
 ```
 
 ```{r}
-hclust_single2 <- hclust(distEuclidea, method = "single")
+hclust_single2 <- hclust(distEuclideaSample, method = "single")
 plot(hclust_single2, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1)
 ```
 
@@ -525,9 +525,6 @@ remove the sex column from the dataset, in order to try to divide the penguins i
 Otros tipos de métodos, average y complete:
 
 ```{r}
-# Calcular la distancia euclidiana solo para las columnas numéricas
-distEuclidea <- dist(data_Normalized[, 1:6], method = "euclidean")
-
 hclust_avg <- hclust(distEuclidea, method = "average")
 plot(hclust_avg, main = "Dendrograma de Clustering - Average", hang = -1)
 ```
@@ -574,14 +571,152 @@ geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
 theme_minimal()
 ```
 
-Again, we end up with very similar results so we can assume that the number of recommended clusters will be two again.
+Again, we end up with very similar results so we can assume that the number of recommended clusters will be
+two again.
 
 Now wee will try again but we will remove the sex column from the dataset.
 
 ```{r}
+dataNoSex <- data_Normalized[1:4]
+
+# Calcular la distancia euclidea
+distEuclidea <- dist(dataNoSex, method = "euclidean")
 ```
 
- I feel love for the f
+```{r}
+hclust_single <- hclust(distEuclidea, method = "single")
+plot(hclust_single, main = "Dendrograma de Clustering - Single", hang = -1)
+```
+```{r}
+idx <- sample(1:dim(dataNoSex)[1], 60)  # Seleccionar 60 muestras aleatorias
+data_Sample <- dataNoSex[idx, ]  
+
+distEuclideaSample <- dist(data_Sample[, 1:4], method = "euclidean")
+```
+
+```{r}
+hclust_single2 <- hclust(distEuclideaSample, method = "single")
+plot(hclust_single2, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1)
+```
+
+Ahora procederemos a cortar en 4 clústers, ya que parece ser la mejor forma de separar los datos.
+
+```{r}
+plot(hclust_single2, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1) 
+
+rect.hclust(hclust_single2, k=4)
+```
+
+```{r}
+groups <- cutree(hclust_single, k = 4)
+
+# Añadir los clusters al dataset
+data_Sample <- as.data.table(dataNoSex)
+data_Sample[, hc.Clusters := groups]
+```
+
+Visualizamos los clusters con PCA
+
+```{r}
+# Añadir los clusters al dataframe de PCA desde el dataframe original
+cl.hclust <- data_PCA[, hc.Clusters := groups]
+
+ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
+geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
+theme_minimal()
+```
+No entiendo por qué da así el dibujo
+
+```{r}
+heigth_single<-hclust_single$height # height values
+height <- c(0, heigth_single[-length(heigth_single)]) # vector that has to be substracted from height.cl
+
+which.max(round(heigth_single-height,3)) # the step of the largest increase
+```
+Como podemos observar con este último valor, el mayor salto se produce en el paso 331, por lo que se determina que el número de clusters óptimo es 3.
+
+Ahora probemos con el método average y el complete.
+
+```{r}
+hclust_average <- hclust(distEuclidea, method = "average")
+plot(hclust_average, main = "Dendrograma de Clustering - Average", hang = -1)
+```
+```{r}
+idx <- sample(1:dim(dataNoSex)[1], 60)  # Seleccionar 60 muestras aleatorias
+data_Sample <- dataNoSex[idx, ]  
+
+distEuclideaSample <- dist(data_Sample[, 1:4], method = "euclidean")
+```
+
+```{r}
+groups <- cutree(hclust_average, k = 4)
+
+# Añadir los clusters al dataset
+data_Sample <- as.data.table(dataNoSex)
+data_Sample[, hc.Clusters := groups]
+```
+
+Visualizamos los clusters con PCA
+
+```{r}
+# Añadir los clusters al dataframe de PCA desde el dataframe original
+cl.hclust <- data_PCA[, hc.Clusters := groups]
+
+ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
+geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
+theme_minimal()
+```
+No entiendo por qué da así el dibujo
+
+```{r}
+heigth_average<-hclust_average$height # height values
+height <- c(0, heigth_average[-length(heigth_average)]) # vector that has to be substracted from height.cl
+
+which.max(round(heigth_average-height,3)) # the step of the largest increase
+```
+Según esto conviene 2 clusters
+
+COMPLETE
+
+```{r}
+hclust_complete <- hclust(distEuclidea, method = "complete")
+plot(hclust_complete, main = "Dendrograma de Clustering - Complete", hang = -1)
+```
+```{r}
+idx <- sample(1:dim(dataNoSex)[1], 60)  # Seleccionar 60 muestras aleatorias
+data_Sample <- dataNoSex[idx, ]  
+
+distEuclideaSample <- dist(data_Sample[, 1:4], method = "euclidean")
+```
+
+```{r}
+groups <- cutree(hclust_complete, k = 4)
+
+# Añadir los clusters al dataset
+data_Sample <- as.data.table(dataNoSex)
+data_Sample[, hc.Clusters := groups]
+```
+
+Visualizamos los clusters con PCA
+
+```{r}
+# Añadir los clusters al dataframe de PCA desde el dataframe original
+cl.hclust <- data_PCA[, hc.Clusters := groups]
+
+ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
+geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
+theme_minimal()
+```
+No entiendo por qué da así el dibujo
+
+```{r}
+heigth_complete<-hclust_complete$height # height values
+height <- c(0, heigth_complete[-length(heigth_complete)]) # vector that has to be substracted from height.cl
+
+which.max(round(heigth_complete-height,3)) # the step of the largest increase
+```
+
+
 ## Conclusion
 
 
