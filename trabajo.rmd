@@ -28,14 +28,10 @@ suppressWarnings({
 
 ```{r}
 data <- read.csv("./penguindata.csv", header=TRUE, stringsAsFactors=TRUE)
-
-# Para las ejecuciones en local de Angel
-# data <- read.csv("../DATASETS/penguindata.csv", header=TRUE, stringsAsFactors=TRUE)
 str(data)
 ```
 
-Si hacemos un primer vistazo, podemos observar como tenemos varios valores NAs que deberemos gestionar
-posteriormente.
+If we take a first look, we can observe that we have several NA values that we will need to handle later.
 
 ### Independent Variables
 
@@ -57,13 +53,13 @@ their values, distribution, and relationship with the target variable.
 ```{r}
 summary(data)
 ```
-We can remove the "x" column as it is not relevant for the analysis.
+
+We can remove the "X" column as it is not relevant for the analysis.
+
 ```{r}
+# Remove the first column
 data <- data[, -1]
 ```
-
-Como podemos observar, tenemos varios valores NA en las variables bill_length_mm, bill_depth_mm, 
-flipper_length_mm, body_mass_g y sex. Más tarde los trataremos.
 
 ### Missing Value Analysis
 
@@ -73,29 +69,32 @@ To find missing values in the dataset, we can use the `is.na()` function in R.
 colSums(is.na(data))
 ```
 
-Como se puede observar, tenemos varias columnas con valores NA. Al tratarse de pocos valores, podemos borrar 
-tranquilamente sin que el modelo se vea afectado.
+As we can see, we have several columns with NA values. Since there are only a few values, we can safely 
+remove them without affecting the model.
 
 ```{r}
 data <- na.omit(data)
 summary(data)
 ```
 
+Now we can see that there are no NA values in the dataset, and therefore we can proceed with our analysis
+correctly.
+
 #### Numerical Variables
 
-- **bill_length_mm:** Este dataset contiene la longitud del pico de los pingüinos en milimetros. Vemos que 
-  la longitud del pico de los pinguinos varia entre 32.1 y 59.6 milimetros, con una media de 44mm. No parece 
-  haber datos excesivamente inusuales
+- **bill_length_mm:** This dataset contains the bill length of penguins in millimeters. We see that it varies 
+  between 32.1 and 59.6 millimeters, with an average of 44mm. There do not appear to be any excessively 
+  unusual data points.
 
-- **bill_depth_mm:**  La profundidad del pico de los pingüinos también viene en milimetros, en un rango entre 
-  13.1mm y 21.5mm, con una media de 17.2mm. De nuevo, no hay ningún dato a resaltar.
+- **bill_depth_mm:** The bill depth of penguins is also in millimeters, ranging from 13.1mm to 21.5mm, with 
+  an average of 17.2mm. Again, there are no notable data points.
 
-- **flipper_length_mm:** La longitud de las aletas de los pinguinos del dataset varia entre 172mm y 231mm, 
-  con una media de 201mm. Tampoco parece haber ningun valor atípico.
+- **flipper_length_mm:** The flipper length of the penguins in the dataset varies between 172mm and 231mm, 
+  with an average of 201mm. There do not appear to be any outliers.
 
-- **body_mass_g:** En el dataset, podemos observar que el peso de los pinguinos puede variar bastante, esto 
-  podría deberse a la edad de los pinguinos, ya que los pinguinos más jóvenes suelen pesar menos. El peso
-  de los pinguinos varia entre 2700g y 6300g, con una media de 4202g.
+- **body_mass_g:** In the dataset, we can observe that the weight of the penguins can vary significantly, 
+  which could be due to the age of the penguins, as younger penguins tend to weigh less. The weight of the 
+  penguins varies between 2700g and 6300g, with an average of 4202g.
 
 ```{r}
 # List of numerical variables:
@@ -112,8 +111,7 @@ for (n in numeric) {
 }
 ```
 
-A primera vista, parece ser que las variables numericas están algo centradas, asemejandose a una distribución
-normal. De todas formas, posteriormente realizaremos un análisis de normalidad para confirmar esto.
+At first glance, it seems that the numerical variables are somewhat centered, resembling a normal distribution. 
 
 #### Categorical
 
@@ -131,12 +129,12 @@ for (var in categories) {
 }
 ```
 
-- **sex:** Se puede observar que hay una cantidad similar de pinguinos machos y hembras en el dataset. 
-  Esto es importante ya que si hubiera una gran diferencia entre los dos sexos, podría afectar a la 
-  precisión del modelo.
+- **sex:** We can observe that there is a similar number of male and female penguins in the dataset. 
+  This is important because if there were a significant difference between the two sexes, it could affect 
+  the accuracy of the model.
 
-- **year:** En el dataset, podemos observar que en cada año se ha hecho el estudio a un número similar de 
-  pingüinos. Nuevamente, esto nos beneficiará a la hora de entrenar el modelo.
+- **year:** In the dataset, we can observe that each year a similar number of penguins were studied. 
+
 
 ### Data Correlations
 
@@ -149,16 +147,17 @@ ggpairs(data,                 # Data frame
             alpha = 0.5))     # Transparency
 ```
 
-Como se puede observar, vemos que el año del estudio no parece tener una gran influencia en las variables
-numéricas así como en el sexo de los pinguinos. Esto es importante ya que si hubiera una gran diferencia
-entre los años, podría afectar a la precisión del modelo. Por tanto, podemos concluir que el año no es una
-variable importante para el modelo y procedemos a eliminarla.
+As we can see, the study year does not seem to have a significant influence on the numerical variables 
+or the sex of the penguins. This is important because if there were a significant difference between 
+the years, it could affect the accuracy of the model. 
+
+Therefore, we can conclude that the year is not an important variable for the model and proceed to remove it.
 
 ```{r}
+# Remove the year column
 data <- data[, -6]
 summary(data)
 ```
-
 
 #### Numerical Variables
 
@@ -168,38 +167,33 @@ numeric_Corr <- data[, c('bill_length_mm', 'bill_depth_mm', 'flipper_length_mm',
 
 ggcorr(numeric_Corr, label = TRUE)
 ```
- Como se puede observar, existe una gran correlación entre todas las variables numéricas, lo que podría 
- afectar a la precisión del modelo. Para solucionar esto, aplicaremos PCA para así poder reducir la 
- dimensionalidad de los datos.
+ 
+As we can see, there is a high correlation between all the numerical variables, which could affect 
+the accuracy of the model. To solve this, we will apply PCA to reduce the dimensionality of the data.
  
 ## Model Building
 
 ### Convert to Numerical Variables
 
 ```{r}
-# Convertir las variables categóricas en variables one hot encoding
+# Convert categorical variables to one hot encoding
 data_Num <- model.matrix(~ . -1, data = data)
 
-# Convertir el resultado a un data frame
+# Convert to data frame
 data_Num <- as.data.frame(data_Num)
 summary(data_Num)
 ```
 
 ### Scaling the data
 
-Para poder aplicar el clustering de forma correcta, es necesario escalar los datos con una media de 0 y una
-desviación estándar de 1. Esto hace que quitemos la barrera de la escala en diferentes variables. 
+To correctly apply clustering, it is necessary to scale the data with a mean of 0 
+and a standard deviation of 1. This removes the scale barrier in different variables.
 
-```{r}
-data_Scaled <- scale(data_Num)
-summary(data_Scaled)
-```
+## Clustering Models
 
-## Clustering models
+### Applying PCA 
 
-### PCA 
-
-Para poder ver mejor los resultados, aplicaremos PCA para reducir la dimensionalidad de los datos.
+To better visualize the results, we will apply PCA to reduce the dimensionality of the data.
 
 ```{r}
 data_Scaled.pca<- prcomp(data_Num, center=TRUE, scale=TRUE)
@@ -210,25 +204,23 @@ summary(data_Scaled.pca)
 plot(data_Scaled.pca, type="l")
 ```
 
-Como se puede ver, las 2 componentes principales explican alrededor del 85% de la varianza de los datos. Esto nos
-permite reducir la dimensionalidad de los datos sin perder mucha información. Además, a la hora de mostrar
-los resultados, podremos visualizarlos en un espacio de 2 dimensiones.
+As we can see, both principal components explain around 85% of the variance of the data. This allows us to
+reduce the dimensionality of the data without losing much information. Furthermore, when displaying the results,
+we can visualize them in a 2-dimensional space.
 
 ```{r}
 data_PCA <- as.data.frame(data_Scaled.pca$x[,1:2])
 ggplot(data=data_PCA, aes(x=PC1, y=PC2, color=data$sex)) + geom_point() +
-  labs(title="PCA", x="PC1", y="PC2")
+       labs(title="PCA", x="PC1", y="PC2")
 ```
 
 ### Deciding the number of clusters
 
-Una manera de decidir el número de clusters es mediante el silhouette method. Este método nos permite 
-determinar el número de clusters que mejor se ajusta a los datos. Para ello, es importante que la puntación	
-sea lo más cercana a 1 posible.
-
-Antes de aplicar el silhouette method, es importante ver de manera visual el número de clusters que mejor se
-ajusta a los datos. Para ello, aplicaremos el método de "elbow plot".
-
+One way we can decide the number of clusters is through the silhouette method. This method allows us to
+determine the number of clusters that best fits the data. To do this, it is important that the score is as
+close to 1 as possible.
+the data. For this, we will apply the "elbow plot" method.Before applying the silhouette method, it is important to visually see the number of clusters that best fits the data. 
+To do this, we will apply the "elbow plot" method.
 ```{r}
 set.seed(123)
 # Compute and plot wss for k = 2 to k = 15
@@ -240,12 +232,11 @@ plot(1:k.max, wss,
      type="b", pch = 19, frame = FALSE, 
      xlab="Number of clusters K",
      ylab="Total within-clusters sum of squares")
-#abline(v = 3, lty =2)
 ```
 
-Como se puede observar, el rango de 3 a 5 clusters parece ser el más adecuado ya que a partir del 5, apenas 
-hay bajado incluso una anormal subida en 6. Para confirmar esto, aplicaremos el silhouette method.
-
+As we can see, the range of 3 to 5 clusters seems to be the most appropriate since from 5 onwards, there is
+hardly any decrease, even an abnormal increase at 6. To confirm this, we will apply the silhouette method.As we can see, the range of 3 to 5 clusters seems to be the most suitable since from 5 onwards, there is barely any decrease 
+and even an abnormal increase at 6. To confirm this, we will apply the silhouette method.
 ```{r}
 cl.kmeans <-kmeans(data_Scaled, 3, nstart = 20)
 dis <- dist(data_Scaled)^2
@@ -254,9 +245,10 @@ summary(sil)
 print(mean(sil[,3]))
 ```
 
-Como se puede observar, vemos como los 2 primeros clusters tienen una puntuación bastante alta, mientras que 
-el tercero tiene una puntuación bastante baja. Esto nos indica que el número de clusters no es el adecuado.
-
+It can be seen that the first 2 clusters have a fairly high score, while the third one has a fairly low
+score. This indicates that the number of clusters is not correct.
+As we can see, the first two clusters have a fairly high score, while the third has a fairly low score. This indicates that 
+the number of clusters is not adequate.
 ```{r}
 cl.kmeans <-kmeans(data_Scaled, 4, nstart = 20)
 dis <- dist(data_Scaled)^2
@@ -265,10 +257,10 @@ summary(sil)
 print(mean(sil[,3]))
 ```
 
-En este caso, vemos como el silhouette method nos indica que el número de clusters es el adecuado, ya que
-una puntuación de media de 0.77, lo cual es bastante bueno. Igualmente, probaremos con 5 clusters para
-confirmar que el número de clusters es el adecuado.
-
+In this case, we see how the silhouette method indicates that the number of clusters is correct, since it has
+a mean score of 0.77, which is quite good. Either way, we will also try with 5 clusters to confirm that the
+number of clusters is correct.In this case, we see that the silhouette method indicates that the number of clusters is adequate, as the average score is 0.77, 
+which is quite good. However, we will try with 5 clusters to confirm that the number of clusters is appropriate.
 ```{r}
 cl.kmeans <-kmeans(data_Scaled, 5, nstart = 20)
 dis <- dist(data_Scaled)^2
@@ -277,14 +269,15 @@ summary(sil)
 print(mean(sil[,3]))
 ```
 
-Con 5 clusters vemos como la puntuación no mejora, por lo que es mejor quedarnos con 4 clusters.
+With 5 clusters, we see how the score does not improve, so it is better to stick with 4 clusters.With 5 clusters we see that the score does not improve, so it is better to stick with 4 clusters.
 
-## Partitional Clustering
+### Partitional Clustering
 
-### Clustering using K-means 
+A clustering method that divides data into non-overlapping clusters, where each data point belongs to one cluster (e.g., k-means).
+
+#### Clustering using K-means 
 
 ```{r}
-# Compute the k-means clustering algorithm
 kmeans_model <- kmeans(data_Scaled, centers = 4, nstart = 20)
 data_PCA <- as.data.table(data_PCA)
 cl.kmeans2 <- data_PCA[, km.Clusters := kmeans_model$cluster]
@@ -294,9 +287,9 @@ geom_point(aes(colour = factor(kmeans_model$cluster)), size = 2, alpha = 0.3) +
 theme_minimal()
 ```
 
-Vemos que los clusters quedan bastante definidos, lo cual es una buena señal. Además, no hay ningún outlier
-que perjudique a los propios clusters. Veamos si se pueden sacar conclusiones con algunas variables.
-
+As we can see, the clusters are quite well defined, which is a good sign. In addition, there are no outliers
+that harm the clusters. Let's see if we can draw conclusions with some variables.We can see that the clusters are well defined, which is a good sign. Additionally, there are no outliers that could negatively
+affect the clusters. Let's see if we can draw conclusions with some variables.
 ```{r}
 data2 <- as.data.table(data)
 data2[, km.Clusters := kmeans_model$cluster]
@@ -304,15 +297,14 @@ ggplot(data2, aes(x = sex, y = body_mass_g)) +
 geom_point(aes(colour = factor(kmeans_model$cluster)), size = 2, alpha = 0.3) +
 theme_minimal()
 ```
- 
-En este caso, podemos indicar como a las hembras se les asigna el cluster 1 o 4, mientras que a los machos
-se les asigna el cluster 2 o 3. Por tanto, el factor del sexo es un factor importante a la hora diferenciar
-las muestras. Además se puede apreciar una tendencia ya que el clúster 1 forman parte del grupo de hembras
-más pesadas, mientras que el clúster 4 forman parte del grupo de hembras más ligeras. En el caso de los
-machos pasa igual, siendo el clúster 2 el que forman parte de los machos más pesados y el clúster 3 los
-machos más ligeros.
 
-Observemos a ver si se pueden apreciar mas tendencias con otras variables.
+In this case, we can point out that females get assigned to clusters 1 or 4, while males get assigned to
+clusters 2 or 3. Therefore, the sex variable is an important factor when differentiating the samples. In
+addition, we can see a trend, as cluster 1 groups the heavier females, while cluster 4 groups the lighter
+females. The same can be noted with the male samples, as the heavier males are grouped in cluster 2 and
+lighter males in cluster 3.
+
+Let's see if we can observe more trends with other variables.
 
 ```{r}
 ggpairs(data2,        # Columns
@@ -320,39 +312,39 @@ ggpairs(data2,        # Columns
             alpha = 0.5))     # Transparency
 ```
 
-En este gráfico se puede sacar bastante información. De primeras, confirmamos lo dicho anteriormente, que
-el cluster 1 y 4 son hembras y el cluster 2 y 3 son machos. Por tanto, nos fijaremos en como se relacionan
-las otras variables con el sexo de los pingüinos. 
+We can extract quite a bit of information from this plot. First, we confirm what we said earlier, that
+clusters 1 and 4 are composed of female samples while clusters 2 and 3 are composed by male samples.
+Therefore, we will focus on how the other variables relate.
 
-Si nos fijamos en la longitud de la aleta, podemos observar como los clusters 1 y 2, los que pesan mas, 
-son los que tienen unalongitud de aleta más larga, mientras que los clusters 3 y 4 son los que tienen una 
-longitud de aleta más corta. Podría ayudarnos a diferenciar entre los machos y hembras adultos y los jóvenes.
+If we look at the flipper length, we can see that clusters 1 and 2, the heaviest ones, are the ones with
+the longer flipper length, while clusters 3 and 4 are the ones with the shorter flipper length. This could
+help us differentiate between male, female adults and young penguins for example.
 
-Sin embargo, si nos fijamos en la profundidad del pico, vemos que la tendencia es inversa a las otras 2.
-Según nuestra suposición, esto supondría que los jovenes tienen un pico mayor que los adultos, lo cual no
-tiene mucho sentido. Por tanto, los clusters no parecen seguir una división de jovenes y adultos por sexo.
-Por tanto, puede ser que el dataset divida por especies de pingüinos. Para ello, más tarde probaremos 
-modificando el dataset.
+If we look at the bill depth, however, we can see that the trend is the opposite. According to our
+hypothesis, this should mean that young penguins have a higher bill depth, which should not not the case.
+Therefore, the clusters do not seem to split by age and sex. Therefore, it could be that the dataset splits
+by penguin species. To test this, we will modify the dataset later.
 
 ### Clustering around K-Medoids (PAM)
 
-Para conocer el número de clusters óptimo, utilizaremos la función pamk del paquete fpc.
+PAM (Partitioning Around Medoids) is a clustering algorithm that is similar to k-means, but instead of using
+the mean of the cluster, it uses the medoid. The medoid is the most centrally located point in the cluster.
+We will now use the pamk function from the fpc package to determine the optimal number of clusters.
 
 ```{r}
+distEuclidea <- dist(data_Scaled, method="euclidean")
+#distEuclidea <- dist(data_Scaled, method="manhattan")
 pamk <- pamk(distEuclidea)
 pamk$nc # Nos muestra el número de clusters óptimo
 ```
 
 Como podemos apreciar, efectivamente el número de clústers óptimo es 4, el cual es el mismo que hemos
-decidido con el k-means.- omsim le se lauc le s
+decidido con el k-means.
 
-Ahora vamos a probar con este algoritmo, usando 4 clusters, asi.como hemos decidido a
-etnemroiret
+Ahora vamos a probar con este algoritmo, usando 4 clusters, asi como hemos decidido anteriormente.
 Probamos primero con la distancia euclidea:
 
 ```{r}
-distEuclidea <- dist(data_Scaled, method="euclidean")
-#distEuclidea <- dist(data_Scaled, method="manhattan")
 pam_Euclidean <- pam(distEuclidea, k = 4)
 pam_Euclidean
 ```
@@ -365,23 +357,6 @@ Vemos que los clusters estan definidos igual de bien que con el k-means. Esto se
 euclidea es la más adecuada para valores continuas o valores mixtas(continuas y categóricas). Este es 
 nuestro caso.
 
-Vamos a ver ahora que obtenemos si usamos la distancia de Manhattan:
-
-```{r}
-distManhattan<-dist(data_Scaled, method="manhattan")
-# Compute the PAM clustering algorithm
-pam_Manhattan <- pam(distManhattan, k = 4)
-pam_Manhattan
-```
-
-```{r}
-clusplot(pam_Manhattan)
-```
-
-Como podemos observar, con la distancia de Manhattan los resultados son mucho peores. Se puede apreciar como
-las muestras de los clusters están mezcladas, lo cual no es bueno. Por tanto, la distancia euclidea parece 
-ser mejor.
-
 ### Clustering Density-based
 
 Para el desnity-based clustering, vamos a utilizar el algoritmo DBSCAN. Los parámetros inicialmente son
@@ -393,40 +368,53 @@ dbscan.results <- dbscan(data_Scaled, eps=0.35, MinPts=5)
 dbscan.results
 ```
 
+Como vemos nos salen 7 clusters, algo demasiado alejado a los otros modelos. Veamos como se distribuyen.
+
 ```{r}
 plot(dbscan.results, data_PCA[, 1:2])
 ```
 
-Como podemos observar hay demasiados clusters y muchos outliers, que es lo que nos indica la columna de "0", así que probaremos otros parámetros
+Como podemos observar hay demasiados clusters y muchos outliers, que es lo que nos indica la columna de "0",
+asi que estos datos no son los adecuados. Vamos a probar con otros parámetros.
 
 ```{r}
 dbscan.results2 <- dbscan(data_Scaled, eps=0.75, MinPts=20) 
 dbscan.results2
 ```
+
+En este caso, los datos se han reducido a 5 clusters, pero siguen siendo demasiados. Además, sigue habiendo
+muchos outliers, en concreto 70. Veamos el gráfico.
+
 ```{r}
 plot(dbscan.results2, data_PCA[, 1:2])
 ```
 
-Sigue habiendo muchos outliers, vamos a intentar mejorarlo
+Sigue habiendo muchos outliers, además de que algunos clusters estan mezclados. Por tanto, vamos a probar
+con unos parámetros menos restrictivos.
 
 ```{r}
 dbscan.results3 <- dbscan(data_Scaled, eps=0.85, MinPts=5) 
 dbscan.results3
 ```
+
+En este caso, los datos se han reducido a 4 clusters, lo cual es el número de clusters de los otros modelos.
+Además, tiene 4 outliers, lo cual es un número aceptable. Veamos el gráfico.
 ```{r}
 plot(dbscan.results3, data_PCA[, 1:2])
 ```
 
-```{r}
-plotcluster(data_PCA[, 1:2], dbscan.results3$cluster)
-```
+Como se puede observar, quedan unos clusters casi igual de definidos que el k-means y el PAM. Además, apenas
+hay outliers, lo cual es una buena señal.
 
-Como podemos observar, el número de clusters es el adecuado, ya que apenas hay outliers y los clusters están
-bien definidos.
+### Hierarchical Clustering
 
-## Hierarchical Clustering
+A method that builds a tree-like structure (dendrogram) to group data. This dendrogram, shows the merging or 
+splitting process and helps decide the optimal number of clusters.
 
-Primero vamos a normalizar los datos para poder aplicar el clustering de forma correcta.
+
+#### Normalizing the data
+
+First, we will normalize the data to correctly apply the clustering.
 
 ```{r}
 # Create normalization function
@@ -438,51 +426,69 @@ normalize <- function(x) {
 data_Normalized <- as.data.frame(lapply(data_Num, normalize))
 summary(data_Normalized)
 ```
+
+Additionally, we will use the Euclidean distance to correctly apply the clustering, 
+as we have discovered that it is the best for our data.
+
 ```{r}
 # Calcular la distancia euclidiea
 distEuclidea <- dist(data_Normalized[, 1:6], method = "euclidean")
 #distEuclidea <- dist(data_Normalized[, 1:6], method = "manhattan")
 ```
 
+### Single Linkage
+
+We will start with the single linkage hierarchical clustering method, which merges the closest clusters at each step. 
+The distance between clusters is calculated as the distance between the closest points of each cluster.
+
 ```{r}
 hclust_single <- hclust(distEuclidea, method = "single")
 plot(hclust_single, main = "Dendrograma de Clustering - Single", hang = -1)
 ```
 
-Como podemos observar, tenemos demasiadas muestras para poder analizar correctamente y se satura el gráfico, vamos a seleccionar un menor número de muestras de forma aleatoria.
+As we can see, we have too many samples to analyze correctly, and the graph becomes saturated. 
+Similarly, given the context of our dataset, it does not make sense to create a sample with a smaller dataset, 
+since without having any dependent variable, it is not useful to see that an individual belongs to one cluster or another.
+
+Let's see how many clusters the dataset should be divided into.
 
 ```{r}
-set.seed(2837)
-
-idx <- sample(1:dim(data_Normalized)[1], 60)  # Seleccionar 60 muestras aleatorias
-data_Sample <- data_Normalized[idx, ]  
-
-distEuclideaSample <- dist(data_Sample[, 1:6], method = "euclidean")
-#distEuclideaSample <- dist(data_Sample[, 1:6], method = "manhattan")
+heigth_single<-hclust_single$height # height values
+heigth_single
 ```
+
+From the height of the clusters, we will determine the number of clusters. The highest "jump" will indicate the optimal 
+number of clusters. To do this, we will see the difference between the highest heights.
 
 ```{r}
-hclust_single2 <- hclust(distEuclideaSample, method = "single")
-plot(hclust_single2, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1)
+height <- c(0, heigth_single[-length(heigth_single)]) # vector that has to be substracted from height.cl
+max(round(heigth_single-height,3)) # the largest increase
 ```
 
-Ahora procederemos a cortar en 4 clústers, como pensamos que se separan mejor los datos.
+This value represents the largest "jump" in the distance between clusters throughout the clustering process. 
+In the context of hierarchical clustering, a large increase in height indicates that two very distinct clusters 
+(in terms of their characteristics) have been merged, which can be a good point to cut the dendrogram.
 
 ```{r}
-plot(hclust_single2, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1) 
-
-rect.hclust(hclust_single2, k=4)
+which.max(round(heigth_single-height,3)) # the step of the largest increase
 ```
+
+Como podemos observar con este último valor, el mayor salto se produce en el paso 332, por lo que se 
+determina que el número de clusters óptimo es 2.
+
+We know, however, that these two clusters are probably the result of dividing the penguins between male and
+female, which isn't useful at all as that classification is obvious and we are trying to divide the penguins
+in a more meaningful way, such as species. Because of this, we are going to try again later but we will
+remove the sex column from the dataset, in order to try to divide the penguins in a more meaningful way.
 
 ```{r}
-groups <- cutree(hclust_single, k = 4)
+groups <- cutree(hclust_single, k = 2)
 
-# Añadir los clusters al dataset
-data_Sample <- as.data.table(data_Normalized)
-data_Sample[, hc.Clusters := groups]
+plot(hclust_single, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1)
+rect.hclust(hclust_single, k=2)
 ```
 
-Visualizamos los clusters con PCA
+Veamos como se distribuyen los clusters con el PCA.
 
 ```{r}
 # Añadir los clusters al dataframe de PCA desde el dataframe original
@@ -493,54 +499,51 @@ geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
 theme_minimal()
 ```
 
+### Complete Linkage
 
 ```{r}
-heigth_single<-hclust_single$height # height values
-heigth_single
-```
-
-```{r}
-height <- c(0, heigth_single[-length(heigth_single)]) # vector that has to be substracted from height.cl
-round(heigth_single-height, 3) # differences in height, rounded at the 3rd digit
-```
-
-```{r}
-max(round(heigth_single-height,3)) # the largest increase
-```
-
-Este valor es el mayor "salto" en la distancia entre los clusters a lo largo del proceso de agrupación. En el contexto de clustering jerárquico, 
-un gran aumento en la altura indica que dos clusters muy distintos (en términos de sus características) se han unido, 
-lo que puede ser un buen punto para cortar el dendrograma.
-
-```{r}
+hclust_complete <- hclust(distEuclidea, method = "complete")
+plot(hclust_complete, main = "Dendrograma de Clustering - Complete", hang = -1)
+heigth_complete<-hclust_complete$height
+height <- c(0, heigth_complete[-length(heigth_complete)]) # vector that has to be substracted from height.cl
+round(heigth_complete-height,3)
+max(round(heigth_complete-height,3))
 which.max(round(heigth_single-height,3)) # the step of the largest increase
 ```
 
-Como podemos observar con este último valor, el mayor salto se produce en el paso 332, por lo que se determina que el número de clusters óptimo es 2.
+En este caso, el mayor salto se produce en el último paso, por lo que determina que el número de clusters
+es 2 nuevamente.
 
-We know, however, that these two clusters are probably the result of dividing the penguins between male and
-female, which isn't useful at all as that classification is obvious and we are trying to divide the penguins
-in a more meaningful way, such as species. Because of this, we are going to try again later but we will
-remove the sex column from the dataset, in order to try to divide the penguins in a more meaningful way.
+```{r}
+groups <- cutree(hclust_complete, k = 2)
+# Añadir los clusters al dataframe de PCA desde el dataframe original
+cl.hclust <- data_PCA[, hc.Clusters := groups]
 
+ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
+geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
+theme_minimal()
+```
 
+Vemos como siguen siendo 2 clústers, lo cual no aporta información como hemos indicado anteriormente. Además,
+vemos como hay distintas muestras que estan mezcladas, lo cual no es bueno.
 
-Otros tipos de métodos, average y complete:
+### Average Linkage
 
 ```{r}
 hclust_avg <- hclust(distEuclidea, method = "average")
 plot(hclust_avg, main = "Dendrograma de Clustering - Average", hang = -1)
+heigth_average <- hclust_avg$height
+height <- c(0, heigth_average[-length(heigth_average)]) # vector that has to be substracted from height.cl
+round(heigth_average-height,3)
+max(round(heigth_average-height,3))
+which.max(round(heigth_single-height,3)) # the step of the largest increase
 ```
 
-```{r}
-groups <- cutree(hclust_avg, k = 4)
-
-# Añadir los clusters al dataset
-data_Sample <- as.data.table(data_Normalized)
-data_Sample[, hc.Clusters := groups]
-```
+Sigue siendo 2 clusters, lo cual no aporta información. Veamos por lo menos como se distribuyen los clusters.
 
 ```{r}
+groups <- cutree(hclust_avg, k = 2)
+
 # Añadir los clusters al dataframe de PCA desde el dataframe original
 cl.hclust <- data_PCA[, hc.Clusters := groups]
 
@@ -552,132 +555,168 @@ theme_minimal()
 As we can see, we end up with very similar results so we can assume that the number of recommended clusters
 will be two again. We will try with the complete method now.
 
-```{r}
-hclust_complete <- hclust(distEuclidea, method = "complete")
-plot(hclust_complete, main = "Dendrograma de Clustering - Complete", hang = -1)
-```
-
-```{r}
-groups <- cutree(hclust_complete, k = 4)
-
-# Añadir los clusters al dataset
-data_Sample <- as.data.table(data_Normalized)
-data_Sample[, hc.Clusters := groups]
-```
-
-```{r}
-# Añadir los clusters al dataframe de PCA desde el dataframe original
-cl.hclust <- data_PCA[, hc.Clusters := groups]
-
-ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
-geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
-theme_minimal()
-```
-
 Again, we end up with very similar results so we can assume that the number of recommended clusters will be
 two again.
 
-Now wee will try again but we will remove the sex column from the dataset.
+## Clustering with NO_SEX
 
 ```{r}
-dataNoSex <- data_Normalized[1:4]
+dataNoSex <- data[1:4]
+dataNoSex_Scaled <- scale(dataNoSex)
 dataNoSex_Scaled.pca<- prcomp(dataNoSex, center=TRUE, scale=TRUE)
-data_PCA <- as.data.frame(dataNoSex_Scaled.pca$x[,1:2])
-data_PCA <- as.data.table(data_PCA)
-
-# Calcular la distancia euclidea
-distEuclidea <- dist(dataNoSex, method = "euclidean")
-#distEuclidea <- dist(dataNoSex, method = "manhattan")
+summary(dataNoSex_Scaled.pca)
 ```
+
+Vemos que las 2 componentes principales explican alrededor del 89% de la varianza de los datos. Esto nos
+permite reducir la dimensionalidad a 2 sin perder mucha información.
+
+```{r}
+data_PCA2 <- as.data.frame(dataNoSex_Scaled.pca$x[,1:2])
+data_PCA2 <- as.data.table(data_PCA2)
+```
+
+### Partitional Clustering
+
+Primero veamos en este caso cual sería el número de clusters óptimo.
+
+```{r}
+set.seed(123)
+# Compute and plot wss for k = 2 to k = 15
+k.max <- 15 # Maximal number of clusters
+wss <- sapply(1:k.max, 
+              function(k){kmeans(dataNoSex_Scaled, k)$tot.withinss})
+
+plot(1:k.max, wss,
+     type="b", pch = 19, frame = FALSE, 
+     xlab="Number of clusters K",
+     ylab="Total within-clusters sum of squares")
+```
+
+Como se puede observar, el rango de 2 a 4 clusters parece ser el más adecuado ya que a partir del 4, apenas 
+hay bajada incluso una anormal subida en 6. Para confirmar esto, aplicaremos el silhouette method.
+
+```{r}
+cl.kmeans <-kmeans(dataNoSex_Scaled, 2, nstart = 20)
+dis <- dist(dataNoSex_Scaled)^2
+sil = silhouette (cl.kmeans$cluster, dis)
+summary(sil)
+print(mean(sil[,3]))
+```
+
+Como se puede observar, vemos como los 2 clusters tienen una puntuación cercana o superior a 0.7 y la media de
+el silhouette method es de 0.73, lo cual es bastante bueno. Igualmente, probaremos con 3 clusters para ver
+si mejora.
+
+```{r}
+cl.kmeans <-kmeans(dataNoSex_Scaled, 3, nstart = 20)
+dis <- dist(dataNoSex_Scaled)^2
+sil = silhouette (cl.kmeans$cluster, dis)
+summary(sil)
+print(mean(sil[,3]))
+```
+
+En este caso, vemos como el silhouette score ha bajado ligeramente, indicandonos que es mejor quedarnos con 2
+clusters en vez de 3.
+
+```{r}
+cl.kmeans <-kmeans(dataNoSex_Scaled, 4, nstart = 20)
+dis <- dist(dataNoSex_Scaled)^2
+sil = silhouette (cl.kmeans$cluster, dis)
+summary(sil)
+print(mean(sil[,3]))
+```
+
+Con 4 clusters vemos como la puntuación no mejora, por lo que es mejor quedarnos con 2 clusters.
+
+#### K-means
+
+```{r}
+# Compute the k-means clustering algorithm
+kmeansNoSex_model <- kmeans(dataNoSex_Scaled, centers = 2, nstart = 20)
+data_PCA2 <- as.data.table(data_PCA2)
+cl.kmeans3 <- data_PCA2[, km.Clusters := kmeans_model$cluster]
+
+ggplot(cl.kmeans3, aes(x = PC1, y = PC2)) +
+geom_point(aes(colour = factor(kmeansNoSex_model$cluster)), size = 2, alpha = 0.3) +
+theme_minimal()
+```
+
+Vemos como los clústers quedan bastante definidos.
+
+#### PAM
+
+```{r}
+distEuclidea <- dist(dataNoSex_Scaled, method="euclidean")
+#distEuclidea <- dist(data_Scaled, method="manhattan")
+pamk <- pamk(distEuclidea)
+pamk$nc # Nos muestra el número de clusters óptimo
+```
+
+Como podemos apreciar, efectivamente el número de clústers óptimo es 2, el cual es el mismo que hemos
+decidido con el k-means.
+
+Ahora vamos a probar con este algoritmo, usando 2 clusters, asi como hemos decidido anteriormente.
+Probamos primero con la distancia euclidea:
+
+```{r}
+pam_Euclidean <- pam(distEuclidea, k = 2)
+pam_Euclidean
+```
+
+```{r}
+clusplot(pam_Euclidean)
+```
+
+Vemos que los clusters estan definidos igual de bien que con el k-means, como anteriormente.
+
+### Hierarchical Clustering
+
+Ahora visualizaremos los clusters usando fviz_dend, que nos permite visualizar los clusters de forma más
+atractiva, pero primero necesitamos saber el número de clusters óptimo.
+
+#### Single Linkage
 
 ```{r}
 hclust_single <- hclust(distEuclidea, method = "single")
-plot(hclust_single, main = "Dendrograma de Clustering - Single", hang = -1)
-```
-```{r}
-idx <- sample(1:dim(dataNoSex)[1], 60)  # Seleccionar 60 muestras aleatorias
-data_Sample <- dataNoSex[idx, ]  
 
-distEuclideaSample <- dist(data_Sample[, 1:4], method = "euclidean")
-#distEuclideaSample <- dist(data_Sample[, 1:4], method = "manhattan")
+heigth_single<-hclust_single$height # height values
+height <- c(0, heigth_single[-length(heigth_single)]) # vector that has to be substracted from height.cl
 
+round(heigth_single-height,3)
+which.max(round(heigth_single-height,3)) # the step of the largest increase
 ```
 
-```{r}
-hclust_single2 <- hclust(distEuclideaSample, method = "single")
-plot(hclust_single2, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1)
-```
-
-Ahora procederemos a cortar en 4 clústers, ya que parece ser la mejor forma de separar los datos.
+Como podemos observar con este último valor, el mayor salto se produce en el paso 331, por lo que se 
+determina que el número de clusters óptimo es 3. Por tanto vamos a cortar en 3 clusters.
 
 ```{r}
-plot(hclust_single2, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1) 
-
-rect.hclust(hclust_single2, k=4)
-rect.hclust(hclust_single2, k=3)
+fviz_dend(hclust_single, k = 3, # cut in four groups
+         cex = 0.6, # label size
+         k_colors = c("#2E9FDF", "#00AFBB", "#E7B800"),
+         color_labels_by_k = TRUE
+)
 ```
+
+Ahora los añadimos al dataset y visualizamos los clusters con PCA.
 
 ```{r}
 groups <- cutree(hclust_single, k = 3)
 
-# Añadir los clusters al dataset
-data_Sample <- as.data.table(dataNoSex)
-data_Sample[, hc.Clusters := groups]
-```
-
-Visualizamos los clusters con PCA
-
-```{r}
-# Añadir los clusters al dataframe de PCA desde el dataframe original
-cl.hclust <- data_PCA[, hc.Clusters := groups]
+cl.hclust <- data_PCA2[, hc.Clusters := groups]
 
 ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
 geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
 theme_minimal()
 ```
-No entiendo por qué da así el dibujo
 
-```{r}
-heigth_single<-hclust_single$height # height values
-height <- c(0, heigth_single[-length(heigth_single)]) # vector that has to be substracted from height.cl
+Vemos como hizo anteriormente, ha dejado un cluster con una muestra. Por tanto, no parece un buen modelo.
 
-which.max(round(heigth_single-height,3)) # the step of the largest increase
-```
-Como podemos observar con este último valor, el mayor salto se produce en el paso 331, por lo que se determina que el número de clusters óptimo es 3.
-
-Ahora probemos con el método average y el complete.
+#### Average Linkage
 
 ```{r}
 hclust_average <- hclust(distEuclidea, method = "average")
 plot(hclust_average, main = "Dendrograma de Clustering - Average", hang = -1)
 ```
-```{r}
-idx <- sample(1:dim(dataNoSex)[1], 60)  # Seleccionar 60 muestras aleatorias
-data_Sample <- dataNoSex[idx, ]  
-
-distEuclideaSample <- dist(data_Sample[, 1:4], method = "euclidean")
-#distEuclideaSample <- dist(data_Sample[, 1:4], method = "manhattan")
-```
-
-```{r}
-groups <- cutree(hclust_average, k = 3)
-
-# Añadir los clusters al dataset
-data_Sample <- as.data.table(dataNoSex)
-data_Sample[, hc.Clusters := groups]
-```
-
-Visualizamos los clusters con PCA
-
-```{r}
-# Añadir los clusters al dataframe de PCA desde el dataframe original
-cl.hclust <- data_PCA[, hc.Clusters := groups]
-
-ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
-geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
-theme_minimal()
-```
-No entiendo por qué da así el dibujo
 
 ```{r}
 heigth_average<-hclust_average$height # height values
@@ -685,56 +724,80 @@ height <- c(0, heigth_average[-length(heigth_average)]) # vector that has to be 
 
 which.max(round(heigth_average-height,3)) # the step of the largest increase
 ```
-Según esto conviene 2 clusters
 
-COMPLETE
-
-```{r}
-hclust_complete <- hclust(distEuclidea, method = "complete")
-plot(hclust_complete, main = "Dendrograma de Clustering - Complete", hang = -1)
-```
-```{r}
-idx <- sample(1:dim(dataNoSex)[1], 60)  # Seleccionar 60 muestras aleatorias
-data_Sample <- dataNoSex[idx, ]  
-
-distEuclideaSample <- dist(data_Sample[, 1:4], method = "euclidean")
-#distEuclideaSample <- dist(data_Sample[, 1:4], method = "manhattan")
-```
+Vamos a visualizarlo usando fviz_cluster(), agrupando los datos en 2 grupos.
 
 ```{r}
-groups <- cutree(hclust_complete, k = 3)
+groups <- cutree(hclust_average, k = 2)
 
-# Añadir los clusters al dataset
-data_Sample <- as.data.table(dataNoSex)
-data_Sample[, hc.Clusters := groups]
+fviz_cluster(list(data = dataNoSex, cluster = groups),
+        palette = c("#D55E00","#0072B2"),
+        ellipse.type = "convex", # Concentration ellipse
+        repel = TRUE, # Avoid label overplotting (slow)
+        show.clust.cent = FALSE, 
+        ggtheme = theme_minimal()
+)
 ```
+
+Lo preparamos para visualizarlo con PCA, añadiendo los datos en el dataset.
 
 Visualizamos los clusters con PCA
 
 ```{r}
 # Añadir los clusters al dataframe de PCA desde el dataframe original
-cl.hclust <- data_PCA[, hc.Clusters := groups]
+cl.hclust <- data_PCA2[, hc.Clusters := groups]
 
 ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
 geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
 theme_minimal()
 ```
 
-```{r}
-heigth_complete<-hclust_complete$height # height values
-height <- c(0, heigth_complete[-length(heigth_complete)]) # vector that has to be substracted from height.cl
+Vemos que los clusters quedan divididos de la misma forma que con el k-means y el PAM, lo cual es una buena
+señal.
 
-which.max(round(heigth_complete-height,3)) # the step of the largest increase
+## Interpretation of the Results
+
+A partir del modelo que mejor define los clusters, podemos intentar interpretar los resultados obtenidos.
+Para ello, disponemos del ggpairs, que nos ayudará a visualizar las relaciones entre las variables y los
+clusters.
+
+```{r}
+data3 <- as.data.table(data)
+data3[, km.Clusters := kmeansNoSex_model$cluster]
+ggpairs(data3,        # Columns
+        aes(color = factor(kmeansNoSex_model$cluster),     # Color by grup (cathegorical)
+            alpha = 0.5))     # Transparency
 ```
 
+Como se puede observar, definir este nuevo dataset no ha aportado información adicional, ya que en los 
+clusters del primer dataset veíamos que en cada sexo, había 2 clusters. En este caso, con el nuevo dataset,
+nos sale como si los 2 clusters de cada sexo fueran el mismo, lo cual no aporta información adicional.
 
-## Conclusion
+```{r}	
+ggpairs(data2,        # Columns
+        aes(color = factor(kmeans_model$cluster),     # Color by grup (cathegorical)
+            alpha = 0.5))     # Transparency
+```
 
+Por otro lado, como dijimos anteriormente, primeramente llegamos a la conclusión de que los clusters podrían
+estar agrupando entre pingüinos adultos y jóvenes. Esto parece tener sentido si vemos las variables del peso
+y la longitud de las aletas pero si vemos la profundidad del pico, vemos que no tiene sentido, ya que según la
+suposición, los jóvenes deberían tener un pico más grande que los adultos, por tanto decrecer cuando los
+pingüinos crecen.
 
+En este caso, existe la posibilidad de que los clústers se estén definiendo según especies de pingüinos. Esto 
+puede ser posible, ya que en otros animales, las especies pueden tener diferencias en el tamaño y peso. 
+En nuestro caso, podría ser que una de las 2 especies de pingüinos sea mas grande que el otro y en 
+consecuencia, tenga una aleta mas larga. 
 
-### Choosing the best model
+En caso del pico, en cuanto a la profundidad, el pingüino mas ligero podría tener un pico mas profundo y en
+cuanto a longitud, vemos que los pingüinos mas ligeros tienen un rango mas amplio y acostumbran a tener un 
+pico mas corto.
 
+## Choosing the best model
 
+En cuanto al mejor modelo, podemos decir que no hay un mejor modelo, ya que el k-means, PAM y el hierarchical
+con average linkage han dado resultados muy similares. Por tanto, en este caso, no hay un mejor modelo.
 
 ### Our Learnings
 
