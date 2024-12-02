@@ -443,7 +443,7 @@ The distance between clusters is calculated as the distance between the closest 
 
 ```{r}
 hclust_single <- hclust(distEuclidea, method = "single")
-plot(hclust_single, main = "Dendrograma de Clustering - Single", hang = -1)
+plot(hclust_single, main = "Clustering dendrogram - Single", hang = -1)
 ```
 
 As we can see, we have too many samples to analyze correctly, and the graph becomes saturated. 
@@ -473,8 +473,8 @@ In the context of hierarchical clustering, a large increase in height indicates 
 which.max(round(heigth_single-height,3)) # the step of the largest increase
 ```
 
-Como podemos observar con este último valor, el mayor salto se produce en el paso 332, por lo que se 
-determina que el número de clusters óptimo es 2.
+As we can see with this last value, the largest jump occurs in step 332, so it is determined that the optimal
+number of clusters is 2.
 
 We know, however, that these two clusters are probably the result of dividing the penguins between male and
 female, which isn't useful at all as that classification is obvious and we are trying to divide the penguins
@@ -484,14 +484,14 @@ remove the sex column from the dataset, in order to try to divide the penguins i
 ```{r}
 groups <- cutree(hclust_single, k = 2)
 
-plot(hclust_single, main = "Dendrograma de Clustering - Single", cex = 0.6, hang = -1)
+plot(hclust_single, main = "Clustering dendrogram - Single", cex = 0.6, hang = -1)
 rect.hclust(hclust_single, k=2)
 ```
 
-Veamos como se distribuyen los clusters con el PCA.
+Let's see how the clusters are distributed using PCA.
 
 ```{r}
-# Añadir los clusters al dataframe de PCA desde el dataframe original
+# Add the clusters from the original dataframe to the PCA dataframe
 cl.hclust <- data_PCA[, hc.Clusters := groups]
 
 ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
@@ -503,7 +503,7 @@ theme_minimal()
 
 ```{r}
 hclust_complete <- hclust(distEuclidea, method = "complete")
-plot(hclust_complete, main = "Dendrograma de Clustering - Complete", hang = -1)
+plot(hclust_complete, main = "Clustering dendrogram - Complete", hang = -1)
 heigth_complete<-hclust_complete$height
 height <- c(0, heigth_complete[-length(heigth_complete)]) # vector that has to be substracted from height.cl
 round(heigth_complete-height,3)
@@ -511,12 +511,14 @@ max(round(heigth_complete-height,3))
 which.max(round(heigth_single-height,3)) # the step of the largest increase
 ```
 
+In this case, the largest jump occurs in step 331, so it is determined that the optimal number of clusters
+seems to be 3 using this method.
 En este caso, el mayor salto se produce en el último paso, por lo que determina que el número de clusters
 es 2 nuevamente.
 
 ```{r}
 groups <- cutree(hclust_complete, k = 2)
-# Añadir los clusters al dataframe de PCA desde el dataframe original
+# Add the clusters to the PCA dataframe from the original dataframe
 cl.hclust <- data_PCA[, hc.Clusters := groups]
 
 ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
@@ -531,7 +533,7 @@ vemos como hay distintas muestras que estan mezcladas, lo cual no es bueno.
 
 ```{r}
 hclust_avg <- hclust(distEuclidea, method = "average")
-plot(hclust_avg, main = "Dendrograma de Clustering - Average", hang = -1)
+plot(hclust_avg, main = "Clustering dendrogram - Average", hang = -1)
 heigth_average <- hclust_avg$height
 height <- c(0, heigth_average[-length(heigth_average)]) # vector that has to be substracted from height.cl
 round(heigth_average-height,3)
@@ -544,7 +546,7 @@ Sigue siendo 2 clusters, lo cual no aporta información. Veamos por lo menos com
 ```{r}
 groups <- cutree(hclust_avg, k = 2)
 
-# Añadir los clusters al dataframe de PCA desde el dataframe original
+# Add the clusters from the original dataframeto the PCA dataframe
 cl.hclust <- data_PCA[, hc.Clusters := groups]
 
 ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
@@ -649,7 +651,7 @@ Vemos como los clústers quedan bastante definidos.
 distEuclidea <- dist(dataNoSex_Scaled, method="euclidean")
 #distEuclidea <- dist(data_Scaled, method="manhattan")
 pamk <- pamk(distEuclidea)
-pamk$nc # Nos muestra el número de clusters óptimo
+pamk$nc # Shows the best number of clusters
 ```
 
 Como podemos apreciar, efectivamente el número de clústers óptimo es 2, el cual es el mismo que hemos
@@ -715,7 +717,7 @@ Vemos como hizo anteriormente, ha dejado un cluster con una muestra. Por tanto, 
 
 ```{r}
 hclust_average <- hclust(distEuclidea, method = "average")
-plot(hclust_average, main = "Dendrograma de Clustering - Average", hang = -1)
+plot(hclust_average, main = "Clustering dendrogram - Average", hang = -1)
 ```
 
 ```{r}
@@ -739,12 +741,12 @@ fviz_cluster(list(data = dataNoSex, cluster = groups),
 )
 ```
 
-Lo preparamos para visualizarlo con PCA, añadiendo los datos en el dataset.
+We prepare it to visualize it with PCA, adding the data to the dataset.
 
-Visualizamos los clusters con PCA
+Visualizing the clusters with PCA.
 
 ```{r}
-# Añadir los clusters al dataframe de PCA desde el dataframe original
+# Add the clusters from the original dataframeto the PCA dataframe
 cl.hclust <- data_PCA2[, hc.Clusters := groups]
 
 ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
@@ -752,14 +754,13 @@ geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
 theme_minimal()
 ```
 
-Vemos que los clusters quedan divididos de la misma forma que con el k-means y el PAM, lo cual es una buena
-señal.
+It can be seen that clusters end up divided in a similar way to the k-means and PAM, which is a good sign.
 
 ## Interpretation of the Results
 
-A partir del modelo que mejor define los clusters, podemos intentar interpretar los resultados obtenidos.
-Para ello, disponemos del ggpairs, que nos ayudará a visualizar las relaciones entre las variables y los
-clusters.
+From the model that best defines the clusters, we can try to hypothesize with the results obtained.
+To do this, we have the ggpairs, which will help us visualize the relationships between the variables and
+the clusters.
 
 ```{r}
 data3 <- as.data.table(data)
