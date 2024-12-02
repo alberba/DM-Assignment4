@@ -226,6 +226,7 @@ determine the number of clusters that best fits the data. To do this, it is impo
 close to 1 as possible.
 the data. For this, we will apply the "elbow plot" method.Before applying the silhouette method, it is important to visually see the number of clusters that best fits the data. 
 To do this, we will apply the "elbow plot" method.
+
 ```{r}
 set.seed(123)
 # Compute and plot wss for k = 2 to k = 15
@@ -242,6 +243,7 @@ plot(1:k.max, wss,
 As we can see, the range of 3 to 5 clusters seems to be the most appropriate since from 5 onwards, there is
 hardly any decrease, even an abnormal increase at 6. To confirm this, we will apply the silhouette method.As we can see, the range of 3 to 5 clusters seems to be the most suitable since from 5 onwards, there is barely any decrease 
 and even an abnormal increase at 6. To confirm this, we will apply the silhouette method.
+
 ```{r}
 cl.kmeans <-kmeans(data_Scaled, 3, nstart = 20)
 dis <- dist(data_Scaled)^2
@@ -254,6 +256,7 @@ It can be seen that the first 2 clusters have a fairly high score, while the thi
 score. This indicates that the number of clusters is not correct.
 As we can see, the first two clusters have a fairly high score, while the third has a fairly low score. This indicates that 
 the number of clusters is not adequate.
+
 ```{r}
 cl.kmeans <-kmeans(data_Scaled, 4, nstart = 20)
 dis <- dist(data_Scaled)^2
@@ -266,6 +269,7 @@ In this case, we see how the silhouette method indicates that the number of clus
 a mean score of 0.77, which is quite good. Either way, we will also try with 5 clusters to confirm that the
 number of clusters is correct.In this case, we see that the silhouette method indicates that the number of clusters is adequate, as the average score is 0.77, 
 which is quite good. However, we will try with 5 clusters to confirm that the number of clusters is appropriate.
+
 ```{r}
 cl.kmeans <-kmeans(data_Scaled, 5, nstart = 20)
 dis <- dist(data_Scaled)^2
@@ -295,6 +299,7 @@ theme_minimal()
 As we can see, the clusters are quite well defined, which is a good sign. In addition, there are no outliers
 that harm the clusters. Let's see if we can draw conclusions with some variables.We can see that the clusters are well defined, which is a good sign. Additionally, there are no outliers that could negatively
 affect the clusters. Let's see if we can draw conclusions with some variables.
+
 ```{r}
 data2 <- as.data.table(data)
 data2[, km.Clusters := kmeans_model$cluster]
@@ -343,11 +348,9 @@ pamk <- pamk(distEuclidea)
 pamk$nc # Nos muestra el número de clusters óptimo
 ```
 
-Como podemos apreciar, efectivamente el número de clústers óptimo es 4, el cual es el mismo que hemos
-decidido con el k-means.
+As we can see, the optimal number of clusters is indeed 4, which is the same as we decided with k-means.
 
-Ahora vamos a probar con este algoritmo, usando 4 clusters, asi como hemos decidido anteriormente.
-Probamos primero con la distancia euclidea:
+Now we will try this algorithm using 4 clusters, as we decided earlier. We will first try with the Euclidean distance.
 
 ```{r}
 pam_Euclidean <- pam(distEuclidea, k = 4)
@@ -358,14 +361,13 @@ pam_Euclidean
 clusplot(pam_Euclidean)
 ```
 
-Vemos que los clusters estan definidos igual de bien que con el k-means. Esto se debe a que la distancia 
-euclidea es la más adecuada para valores continuas o valores mixtas(continuas y categóricas). Este es 
-nuestro caso.
+We see that the clusters are defined just as well as with k-means. This is because the Euclidean distance 
+is the most suitable for continuous or mixed values (continuous and categorical). This is our case.
 
 ### Clustering Density-based
 
-Para el desnity-based clustering, vamos a utilizar el algoritmo DBSCAN. Los parámetros inicialmente son
-aleatorios, hasta que encontremos los parámetros que mejor se ajusten a los datos.
+For density-based clustering, we will use the DBSCAN algorithm. The parameters are initially random until 
+we find the parameters that best fit the data.
 
 ```{r}
 library(fpc)
@@ -373,43 +375,43 @@ dbscan.results <- dbscan(data_Scaled, eps=0.35, MinPts=5)
 dbscan.results
 ```
 
-Como vemos nos salen 7 clusters, algo demasiado alejado a los otros modelos. Veamos como se distribuyen.
+As we can see, we get 7 clusters, which is quite different from the other models. Let's see how they are distributed.
 
 ```{r}
 plot(dbscan.results, data_PCA[, 1:2])
 ```
 
-Como podemos observar hay demasiados clusters y muchos outliers, que es lo que nos indica la columna de "0",
-asi que estos datos no son los adecuados. Vamos a probar con otros parámetros.
+As we can see, there are too many clusters and many outliers, as indicated by the "0" column, 
+so these parameters are not suitable. Let's try with different parameters.
 
 ```{r}
 dbscan.results2 <- dbscan(data_Scaled, eps=0.75, MinPts=20) 
 dbscan.results2
 ```
 
-En este caso, los datos se han reducido a 5 clusters, pero siguen siendo demasiados. Además, sigue habiendo
-muchos outliers, en concreto 70. Veamos el gráfico.
+In this case, the data has been reduced to 5 clusters, but there are still too many. 
+Additionally, there are still many outliers, specifically 70. Let's see the plot.
 
 ```{r}
 plot(dbscan.results2, data_PCA[, 1:2])
 ```
 
-Sigue habiendo muchos outliers, además de que algunos clusters estan mezclados. Por tanto, vamos a probar
-con unos parámetros menos restrictivos.
+There are still many outliers, and some clusters are mixed. Therefore, let's try with less restrictive parameters.
 
 ```{r}
 dbscan.results3 <- dbscan(data_Scaled, eps=0.85, MinPts=5) 
 dbscan.results3
 ```
 
-En este caso, los datos se han reducido a 4 clusters, lo cual es el número de clusters de los otros modelos.
-Además, tiene 4 outliers, lo cual es un número aceptable. Veamos el gráfico.
+In this case, the data has been reduced to 4 clusters, which is the number of clusters from the other models. 
+Additionally, it has 4 outliers, which is an acceptable number. Let's see the plot.
+
 ```{r}
 plot(dbscan.results3, data_PCA[, 1:2])
 ```
 
-Como se puede observar, quedan unos clusters casi igual de definidos que el k-means y el PAM. Además, apenas
-hay outliers, lo cual es una buena señal.
+As we can see, the clusters are almost as well defined as with k-means and PAM. Additionally, there are hardly any outliers,
+which is a good sign.
 
 ### Hierarchical Clustering
 
@@ -516,10 +518,7 @@ max(round(heigth_complete-height,3))
 which.max(round(heigth_complete-height,3)) # the step of the largest increase
 ```
 
-In this case, the largest jump occurs in step 331, so it is determined that the optimal number of clusters
-seems to be 3 using this method.
-En este caso, el mayor salto se produce en el último paso, por lo que determina que el número de clusters
-es 2 nuevamente.
+In this case, the largest jump occurs in the last step, so it determines that the number of clusters is 2 again.
 
 ```{r}
 groups <- cutree(hclust_complete, k = 2)
@@ -531,8 +530,7 @@ geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
 theme_minimal()
 ```
 
-Vemos como siguen siendo 2 clústers, lo cual no aporta información como hemos indicado anteriormente. Además,
-vemos como hay distintas muestras que estan mezcladas, lo cual no es bueno.
+We see that this distribution into 2 clusters does not provide useful information as we indicated earlier.
 
 ### Average Linkage
 
@@ -546,7 +544,7 @@ max(round(heigth_average-height,3))
 which.max(round(heigth_average-height,3)) # the step of the largest increase
 ```
 
-Sigue siendo 2 clusters, lo cual no aporta información. Veamos por lo menos como se distribuyen los clusters.
+It is still 2 clusters, which does not provide additional information. Let's at least see how the clusters are distributed.
 
 ```{r}
 groups <- cutree(hclust_avg, k = 2)
@@ -561,9 +559,6 @@ theme_minimal()
 
 As we can see, we end up with very similar results so we can assume that the number of recommended clusters
 will be two again. We will try with the complete method now.
-
-Again, we end up with very similar results so we can assume that the number of recommended clusters will be
-two again.
 
 ### Centroid Linkage
 
@@ -638,7 +633,7 @@ data_PCA2 <- as.data.table(data_PCA2)
 
 ### Partitional Clustering
 
-Primero veamos en este caso cual sería el número de clusters óptimo.
+First, let's see what the optimal number of clusters would be in this case.
 
 ```{r}
 set.seed(123)
@@ -653,8 +648,8 @@ plot(1:k.max, wss,
      ylab="Total within-clusters sum of squares")
 ```
 
-Como se puede observar, el rango de 2 a 4 clusters parece ser el más adecuado ya que a partir del 4, apenas 
-hay bajada incluso una anormal subida en 6. Para confirmar esto, aplicaremos el silhouette method.
+As we can see, the range of 2 to 4 clusters seems to be the most appropriate since from 4 onwards, there is 
+hardly any decrease, even an abnormal increase at 6. To confirm this, we will apply the silhouette method.
 
 ```{r}
 cl.kmeans <-kmeans(dataNoSex_Scaled, 2, nstart = 20)
@@ -664,9 +659,8 @@ summary(sil)
 print(mean(sil[,3]))
 ```
 
-Como se puede observar, vemos como los 2 clusters tienen una puntuación cercana o superior a 0.7 y la media de
-el silhouette method es de 0.73, lo cual es bastante bueno. Igualmente, probaremos con 3 clusters para ver
-si mejora.
+As we can see, the 2 clusters have a score close to or higher than 0.7, and the average silhouette score is 0.73,
+which is quite good. We will also try with 3 clusters to see if it improves.
 
 ```{r}
 cl.kmeans <-kmeans(dataNoSex_Scaled, 3, nstart = 20)
@@ -676,8 +670,7 @@ summary(sil)
 print(mean(sil[,3]))
 ```
 
-En este caso, vemos como el silhouette score ha bajado ligeramente, indicandonos que es mejor quedarnos con 2
-clusters en vez de 3.
+In this case, we see that the silhouette score has slightly decreased, indicating that it is better to stick with 2 clusters instead of 3.
 
 ```{r}
 cl.kmeans <-kmeans(dataNoSex_Scaled, 4, nstart = 20)
@@ -687,7 +680,7 @@ summary(sil)
 print(mean(sil[,3]))
 ```
 
-Con 4 clusters vemos como la puntuación no mejora, por lo que es mejor quedarnos con 2 clusters.
+With 4 clusters, we see that the score does not improve, so it is better to stick with 2 clusters.
 
 #### K-means
 
@@ -702,7 +695,7 @@ geom_point(aes(colour = factor(kmeansNoSex_model$cluster)), size = 2, alpha = 0.
 theme_minimal()
 ```
 
-Vemos como los clústers quedan bastante definidos.
+We can see that the clusters are quite well defined.
 
 #### PAM
 
@@ -713,11 +706,9 @@ pamk <- pamk(distEuclidea)
 pamk$nc # Shows the best number of clusters
 ```
 
-Como podemos apreciar, efectivamente el número de clústers óptimo es 2, el cual es el mismo que hemos
-decidido con el k-means.
+As we can see, the optimal number of clusters is indeed 2, which is the same as we decided with k-means.
 
-Ahora vamos a probar con este algoritmo, usando 2 clusters, asi como hemos decidido anteriormente.
-Probamos primero con la distancia euclidea:
+Now we will try this algorithm using 2 clusters, as we decided earlier. We will first try with the Euclidean distance.
 
 ```{r}
 pam_Euclidean <- pam(distEuclidea, k = 2)
@@ -728,12 +719,12 @@ pam_Euclidean
 clusplot(pam_Euclidean)
 ```
 
-Vemos que los clusters estan definidos igual de bien que con el k-means, como anteriormente.
+We see that the clusters are defined just as well as with k-means, as before.
 
 ### Hierarchical Clustering
 
-Ahora visualizaremos los clusters usando fviz_dend, que nos permite visualizar los clusters de forma más
-atractiva, pero primero necesitamos saber el número de clusters óptimo.
+Now we will visualize the clusters using fviz_dend, which allows us to visualize the clusters in a more
+attractive way, but first we need to know the optimal number of clusters.
 
 #### Single Linkage
 
@@ -747,8 +738,8 @@ round(heigth_single-height,3)
 which.max(round(heigth_single-height,3)) # the step of the largest increase
 ```
 
-Como podemos observar con este último valor, el mayor salto se produce en el paso 331, por lo que se 
-determina que el número de clusters óptimo es 3. Por tanto vamos a cortar en 3 clusters.
+As we can see with this last value, the largest jump occurs in step 331, so it is determined that the optimal 
+number of clusters is 3. Therefore, we will cut into 3 clusters.
 
 ```{r}
 fviz_dend(hclust_single, k = 3, # cut in four groups
@@ -758,7 +749,7 @@ fviz_dend(hclust_single, k = 3, # cut in four groups
 )
 ```
 
-Ahora los añadimos al dataset y visualizamos los clusters con PCA.
+Now we add them to the dataset and visualize the clusters with PCA.
 
 ```{r}
 groups <- cutree(hclust_single, k = 3)
@@ -770,7 +761,7 @@ geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
 theme_minimal()
 ```
 
-Vemos como hizo anteriormente, ha dejado un cluster con una muestra. Por tanto, no parece un buen modelo.
+As we saw earlier, it has left a cluster with a single sample. Therefore, it does not seem to be a good model.
 
 #### Average Linkage
 
@@ -786,7 +777,7 @@ height <- c(0, heigth_average[-length(heigth_average)]) # vector that has to be 
 which.max(round(heigth_average-height,3)) # the step of the largest increase
 ```
 
-Vamos a visualizarlo usando fviz_cluster(), agrupando los datos en 2 grupos.
+Let's visualize it using fviz_cluster(), grouping the data into 2 clusters.
 
 ```{r}
 groups <- cutree(hclust_average, k = 2)
@@ -904,3 +895,5 @@ interpret the results according to the dataset and its variables.
   written in Spanish.
 - [RMD files from class]: Used as a reference for the structure of the document and as examples of
   model implementation.
+
+
