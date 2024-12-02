@@ -844,66 +844,63 @@ On the other hand, as we said before, we initially came to the conclusion that t
 the penguins according to their age (adult penguins and young penguins). This seems to make sense if we look
 at the variables of weight and flipper length, but if we look at the bill depth, it does not make sense, as,
 according to the assumption, young penguins should have a deeper bill, which would mean that it decreases as
-the penguins grow up, which is simply ilogical.
+the penguins grow up, which is simply illogical.
 
-
-En este caso, existe la posibilidad de que los clústers se estén definiendo según especies de pingüinos. Esto 
-puede ser posible, ya que en otros animales, las especies pueden tener diferencias en el tamaño y peso. 
-En nuestro caso, podría ser que una de las 2 especies de pingüinos sea mas grande que el otro y en 
-consecuencia, tenga una aleta mas larga. 
-
-En caso del pico, en cuanto a la profundidad, el pingüino mas ligero podría tener un pico mas profundo y en
-cuanto a longitud, vemos que los pingüinos mas ligeros tienen un rango mas amplio y acostumbran a tener un 
-pico mas corto.
+It is possible that, instead of being grouped by age or sex, the penguins are being grouped by species. This
+could be possible, as different species of the same animal may have differences in size and weight of certain
+body parts (or the body as a whole). In our case, it could be possible that one of the two species of
+penguins is larger than the other and, consequently, has a longer flipper. Regarding the bill, the
+lighter penguins are prone to having a deeper bill and their length is shorter and can fall within a larger
+range of values compared to the heavier penguins.
 
 ## Choosing the best model
 
-En cuanto al mejor modelo, podemos decir que no hay un mejor modelo, ya que el k-means, PAM y el hierarchical
-con average linkage han dado resultados muy similares. Por tanto, en este caso, no hay un mejor modelo.
+We don't see fit to choose the best model in this context, as we don't have a dependent variable to compare
+the different results. We can see however that the k-means, PAM and the hierarchical clustering with average
+linkage have given very similar results. Therefore, in this case, there is no best model, however, we think
+that the fact that different models have given similar results reinforces, in a way, the results obtained.
 
 ## Conclusion
 
-El objetivo de este proyecto fue buscar maneras de poder agrupar el conjunto de pingüinos de una manera
-coherente a partir de clústers.
+The objective of this project was to find ways to group the set of penguins in a coherent making use of
+clusters. When exploring the data, we found that there were several null values that we removed as they did
+not represent a significant percentage of the dataset and they could have acted as noise. We also removed the
+X (penguin identifier) and year columns, as they did not provide relevant information for the analysis . We
+then saw that there was a strong correlation between the remaining variables, so we decided to apply PCA in
+order to reduce the dimensionality of the data.
 
-Mientras explorabamos los datos, nos encontramos con que había varios valores nulos que eliminamos ya que no
-suponían un porcentaje significativo del dataset. También eliminamos las columnas de X (identificador del
-pingüino) y year, ya que no aportaban información relevante para el análisis y vimos que entre las variables
-faltantes había una fuerte correlación, por lo que decidimos aplicar PCA para reducir la dimensionalidad de 
-los datos.
+Once we applied PCA, we transformed the dataset to convert it into numerical values. For the partitioning
+models, we scaled the dataset and in the case of hierarchical clustering, we normalized the dataset. Once the
+dataset was transformed, we applied the different clustering models in order to achieve different
+perspectives of the data. In the case of the partitioning models, we applied the k-means, PAM and DBSCAN,
+while in the case of hierarchical clustering, we applied the different linkage methods. In each of the models,
+we defined the optimal number of clusters using via different methods.
 
-Una vez aplicamos el PCA, transformamos el dataset para convertirlo en valores numéricos. Para los modelos
-particionales, escalamos el dataset y en el caso de los hierarchical clustering, normalizamos el dataset.
+Regarding results, we saw that most of them gave us similar results, specificallty the k-means, PAM, DBSCAN and
+some linkage methods of hierarchical clustering. Because of this, We could not say that there was a
+better model.
 
-Una vez transformamos el dataset, aplicamos los diferentes modelos de clustering. En el caso de los modelos
-particionales, aplicamos el k-means, el PAM y el DBSCAN, mientras que en el caso de los hierarchical 
-clustering, aplicamos los diferentes métodos de linkage. En cada uno de los modelos, a partir de unas 
-funciones, definimos el número de clusters óptimo.
+When analyzing the clusters, we noticed that each sex had two clusters assigned to them, which meant that the
+clustering process was heavily influenced by this variable. We thought that the clusters could be grouping the
+penguins according to their age, but when looking at the variables, we saw that it did not make much sense.
 
-En cuanto a los resultados, vimos que tanto el k-means, el PAM, el DBSCAN y algunos linkage del hierarchical 
-clustering, nos daban resultados muy similares, por lo que no podemos decir que haya un mejor modelo.
-
-A la hora de interpretar los clústers, nos fijamos como cada sexo tenía 2 clústers, lo cual nos indicaba que
-el sexo del pingüino tuvo un papel importante en la agrupación. Vimos como parecía que los clústers 
-agrupaban los pingüinos según si eran adultos o jóvenes, pero al mirar las variables, vimos que no tenía
-mucho sentido.
-
-Por último, aplicamos los mismos modelos pero eliminando la variable de sexo, ya que vimos que influenciaba
-mucho en la agrupación. Los resultados de este dataset fueron muy similares a los anteriores, por lo que no
-pudimos sacar ninguna conclusión adicional. La suposición final de como se agrupaban los pingüinos fue que
-se agrupaban según especies.
+Lastly, we applied the same models but we had removed the sec variable as it was heavily influencing the
+clustering and classifying the penguins by sex was superfluous. The results were very similar to previous
+analyses, so we could not draw any additional conclusions. Our final conclusion was that the penguins could
+be grouped by species and that there are two of them in the dataset, this theory fits with our findings
+about there being two different types of penguins, each with differences that were not tied to age.
 
 ### Our Learnings
 
-Hemos aprendido lo complicado que es llegar a un veredicto final en cuanto a la agrupación de los datos, pero
-también hemos aprendido a aplicar los diferentes modelos de clustering que existen y sobretodo, a interpretar
-los resultados según el dataset y sus variables.
+We have learned how complex the process of reaching a conclusion can be when in the context of data
+classification. However, we have also learned to apply the different clustering models and, above all, to
+interpret the results according to the dataset and its variables.
 
 ### References
 
 - [R Documentation] (https://www.rdocumentation.org/): Used to understand some of the functions and packages
   used in our analysis.
-- [ChatGPT] (chatgpt.com): Used for help in making sense of the data, translation of some text originally
-  written in Spanish and removal of certain warnings generated by library functions.
+- [ChatGPT] (chatgpt.com): Used for help in making sense of the data and translation of some text originally
+  written in Spanish.
 - [RMD files from class]: Used as a reference for the structure of the document and as examples of
   model implementation.
