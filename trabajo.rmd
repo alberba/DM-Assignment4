@@ -364,6 +364,21 @@ clusplot(pam_Euclidean)
 We see that the clusters are defined just as well as with k-means. This is because the Euclidean distance 
 is the most suitable for continuous or mixed values (continuous and categorical). This is our case.
 
+Let's see now what we get if we use the Manhattan distance.
+
+```{r}
+distManhattan <- dist(data_Scaled, method="manhattan")
+pam_Manhattan <- pam(distManhattan, k = 4)
+pam_Manhattan
+```
+
+```{r}
+clusplot(pam_Manhattan)
+```
+
+As we can see, with the Manhattan distance, the results are much worse. We can observe how the samples 
+of the clusters are mixed, which is not good. Therefore, the Euclidean distance seems to be better.
+
 ### Clustering Density-based
 
 For density-based clustering, we will use the DBSCAN algorithm. The parameters are initially random until 
@@ -720,6 +735,21 @@ clusplot(pam_Euclidean)
 ```
 
 We see that the clusters are defined just as well as with k-means, as before.
+
+Let's see now what we get if we use the Manhattan distance.
+
+```{r}
+distManhattan <- dist(data_Scaled, method="manhattan")
+pam_Manhattan <- pam(distManhattan, k = 2)
+pam_Manhattan
+```
+
+```{r}
+clusplot(pam_Manhattan)
+```
+
+As we can see, with the Manhattan distance, the results are much worse having just a 21.55% of the explanation with those components. 
+So, as what happened before, we will apply just the Euclidean distance.
 
 ### Hierarchical Clustering
 
