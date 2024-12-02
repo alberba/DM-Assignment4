@@ -189,6 +189,11 @@ summary(data_Num)
 To correctly apply clustering, it is necessary to scale the data with a mean of 0 
 and a standard deviation of 1. This removes the scale barrier in different variables.
 
+```{r}	
+data_Scaled <- scale(data_Num)
+summary(data_Scaled)
+```
+
 ## Clustering Models
 
 ### Applying PCA 
@@ -508,7 +513,7 @@ heigth_complete<-hclust_complete$height
 height <- c(0, heigth_complete[-length(heigth_complete)]) # vector that has to be substracted from height.cl
 round(heigth_complete-height,3)
 max(round(heigth_complete-height,3))
-which.max(round(heigth_single-height,3)) # the step of the largest increase
+which.max(round(heigth_complete-height,3)) # the step of the largest increase
 ```
 
 In this case, the largest jump occurs in step 331, so it is determined that the optimal number of clusters
@@ -538,7 +543,7 @@ heigth_average <- hclust_avg$height
 height <- c(0, heigth_average[-length(heigth_average)]) # vector that has to be substracted from height.cl
 round(heigth_average-height,3)
 max(round(heigth_average-height,3))
-which.max(round(heigth_single-height,3)) # the step of the largest increase
+which.max(round(heigth_average-height,3)) # the step of the largest increase
 ```
 
 Sigue siendo 2 clusters, lo cual no aporta información. Veamos por lo menos como se distribuyen los clusters.
@@ -560,6 +565,60 @@ will be two again. We will try with the complete method now.
 Again, we end up with very similar results so we can assume that the number of recommended clusters will be
 two again.
 
+### Centroid Linkage
+
+```{r}
+hclust_centroid <- hclust(distEuclidea, method = "centroid")
+plot(hclust_centroid, main = "Clustering dendrogram - Centroid", hang = -1)
+heigth_centroid <- hclust_centroid$height
+height <- c(0, heigth_centroid[-length(heigth_centroid)]) # vector that has to be substracted from height.cl
+round(heigth_centroid-height,3)
+max(round(heigth_centroid-height,3))
+which.max(round(heigth_centroid-height,3)) # the step of the largest increase
+```
+
+In this case, the largest jump occurs in step 332, so it is determined that the optimal number of clusters
+seems to be 2 using this method.
+
+```{r}
+groups <- cutree(hclust_centroid, k = 2)
+# Add the clusters to the PCA dataframe from the original dataframe
+cl.hclust <- data_PCA[, hc.Clusters := groups]
+
+ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
+geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
+theme_minimal()
+```
+
+We can see that it has formed a tree almost identical to the average one, so the final clusters are the same.
+
+### Ward Linkage
+
+```{r}
+hclust_ward <- hclust(distEuclidea, method = "ward.D2")
+plot(hclust_ward, main = "Clustering dendrogram - Ward", hang = -1)
+heigth_ward <- hclust_ward$height
+height <- c(0, heigth_ward[-length(heigth_ward)]) # vector that has to be substracted from height.cl
+round(heigth_ward-height,3)
+max(round(heigth_ward-height,3))
+which.max(round(heigth_ward-height,3)) # the step of the largest increase
+```
+
+Using Ward's method, we can see that the largest jump occurs at step 332, which determines that the optimal 
+number of clusters is 2 again.
+
+```{r}
+groups <- cutree(hclust_ward, k = 2)
+# Add the clusters to the PCA dataframe from the original dataframe
+cl.hclust <- data_PCA[, hc.Clusters := groups]
+
+ggplot(cl.hclust, aes(x = PC1, y = PC2)) +
+geom_point(aes(colour = factor(cl.hclust$hc.Clusters)), size = 2, alpha = 0.3) +
+theme_minimal()
+```
+
+Again, we see that nothing changes.
+
 ## Clustering with NO_SEX
 
 ```{r}
@@ -569,8 +628,8 @@ dataNoSex_Scaled.pca<- prcomp(dataNoSex, center=TRUE, scale=TRUE)
 summary(dataNoSex_Scaled.pca)
 ```
 
-Vemos que las 2 componentes principales explican alrededor del 89% de la varianza de los datos. Esto nos
-permite reducir la dimensionalidad a 2 sin perder mucha información.
+We see that the 2 principal components explain around 89% of the variance in the data. This allows us to 
+reduce the dimensionality to 2 without losing much information.
 
 ```{r}
 data_PCA2 <- as.data.frame(dataNoSex_Scaled.pca$x[,1:2])
@@ -770,9 +829,10 @@ ggpairs(data3,        # Columns
             alpha = 0.5))     # Transparency
 ```
 
-Como se puede observar, definir este nuevo dataset no ha aportado información adicional, ya que en los 
-clusters del primer dataset veíamos que en cada sexo, había 2 clusters. En este caso, con el nuevo dataset,
-nos sale como si los 2 clusters de cada sexo fueran el mismo, lo cual no aporta información adicional.
+It can be seen that removing the sex variable from the dataset has not provided additional information, as in
+the clusters of the first version of the dataset we saw that each sex had two clusters. Now, with the new
+version of the dataset, it seems that the two clusters of each sex are onne in the same, which does not
+provide additional information.
 
 ```{r}	
 ggpairs(data2,        # Columns
@@ -780,11 +840,12 @@ ggpairs(data2,        # Columns
             alpha = 0.5))     # Transparency
 ```
 
-Por otro lado, como dijimos anteriormente, primeramente llegamos a la conclusión de que los clusters podrían
-estar agrupando entre pingüinos adultos y jóvenes. Esto parece tener sentido si vemos las variables del peso
-y la longitud de las aletas pero si vemos la profundidad del pico, vemos que no tiene sentido, ya que según la
-suposición, los jóvenes deberían tener un pico más grande que los adultos, por tanto decrecer cuando los
-pingüinos crecen.
+On the other hand, as we said before, we initially came to the conclusion that the clusters could be grouping
+the penguins according to their age (adult penguins and young penguins). This seems to make sense if we look
+at the variables of weight and flipper length, but if we look at the bill depth, it does not make sense, as,
+according to the assumption, young penguins should have a deeper bill, which would mean that it decreases as
+the penguins grow up, which is simply ilogical.
+
 
 En este caso, existe la posibilidad de que los clústers se estén definiendo según especies de pingüinos. Esto 
 puede ser posible, ya que en otros animales, las especies pueden tener diferencias en el tamaño y peso. 
@@ -800,9 +861,43 @@ pico mas corto.
 En cuanto al mejor modelo, podemos decir que no hay un mejor modelo, ya que el k-means, PAM y el hierarchical
 con average linkage han dado resultados muy similares. Por tanto, en este caso, no hay un mejor modelo.
 
+## Conclusion
+
+El objetivo de este proyecto fue buscar maneras de poder agrupar el conjunto de pingüinos de una manera
+coherente a partir de clústers.
+
+Mientras explorabamos los datos, nos encontramos con que había varios valores nulos que eliminamos ya que no
+suponían un porcentaje significativo del dataset. También eliminamos las columnas de X (identificador del
+pingüino) y year, ya que no aportaban información relevante para el análisis y vimos que entre las variables
+faltantes había una fuerte correlación, por lo que decidimos aplicar PCA para reducir la dimensionalidad de 
+los datos.
+
+Una vez aplicamos el PCA, transformamos el dataset para convertirlo en valores numéricos. Para los modelos
+particionales, escalamos el dataset y en el caso de los hierarchical clustering, normalizamos el dataset.
+
+Una vez transformamos el dataset, aplicamos los diferentes modelos de clustering. En el caso de los modelos
+particionales, aplicamos el k-means, el PAM y el DBSCAN, mientras que en el caso de los hierarchical 
+clustering, aplicamos los diferentes métodos de linkage. En cada uno de los modelos, a partir de unas 
+funciones, definimos el número de clusters óptimo.
+
+En cuanto a los resultados, vimos que tanto el k-means, el PAM, el DBSCAN y algunos linkage del hierarchical 
+clustering, nos daban resultados muy similares, por lo que no podemos decir que haya un mejor modelo.
+
+A la hora de interpretar los clústers, nos fijamos como cada sexo tenía 2 clústers, lo cual nos indicaba que
+el sexo del pingüino tuvo un papel importante en la agrupación. Vimos como parecía que los clústers 
+agrupaban los pingüinos según si eran adultos o jóvenes, pero al mirar las variables, vimos que no tenía
+mucho sentido.
+
+Por último, aplicamos los mismos modelos pero eliminando la variable de sexo, ya que vimos que influenciaba
+mucho en la agrupación. Los resultados de este dataset fueron muy similares a los anteriores, por lo que no
+pudimos sacar ninguna conclusión adicional. La suposición final de como se agrupaban los pingüinos fue que
+se agrupaban según especies.
+
 ### Our Learnings
 
-
+Hemos aprendido lo complicado que es llegar a un veredicto final en cuanto a la agrupación de los datos, pero
+también hemos aprendido a aplicar los diferentes modelos de clustering que existen y sobretodo, a interpretar
+los resultados según el dataset y sus variables.
 
 ### References
 
